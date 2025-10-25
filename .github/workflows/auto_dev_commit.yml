@@ -57,6 +57,12 @@ jobs:
         run: |
           PROGRESS_FILE=".progress.json"
           
+          # Create progress file if it doesn't exist (fallback safety)
+          if [ ! -f "$PROGRESS_FILE" ]; then
+            echo "⚠️ Progress file missing, creating it..."
+            echo '{"frontend_completed":[],"backend_completed":[]}' > $PROGRESS_FILE
+          fi
+          
           # Get completed counts
           FRONTEND_DONE=$(jq -r '.frontend_completed | length' $PROGRESS_FILE)
           BACKEND_DONE=$(jq -r '.backend_completed | length' $PROGRESS_FILE)
@@ -77,7 +83,7 @@ jobs:
           else
             # Both done, reset and start over with frontend
             echo "🎉 All instructions completed! Starting over..."
-            jq '.frontend_completed = [] | .backend_completed = []' $PROGRESS_FILE > tmp_progress.$.json && mv tmp_progress.$.json $PROGRESS_FILE
+            jq '.frontend_completed = [] | .backend_completed = []' $PROGRESS_FILE > tmp_progress.$$.json && mv tmp_progress.$$.json $PROGRESS_FILE
             SELECTED_FILE="ai_instructions.json"
             echo "📱 Restarting with frontend"
           fi
@@ -101,7 +107,32 @@ jobs:
           echo "INSTRUCTIONS_B64=$(echo "$INSTRUCTIONS" | base64 -w 0)" >> $GITHUB_ENV
           echo "Instructions extracted successfully"
 
-      - name: Track progress and select uncompleted instruction
+      - name: Setup daily quota
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          QUOTA_FILE=".monthly_commit_quota.json"
+          
+          # Create quota file if it doesn't exist
+          if [ ! -f "$QUOTA_FILE" ]; then
+            echo '{}' > $QUOTA_FILE
+          fi
+          
+          TODAY_DATA=$(jq -r ".\"$TODAY\"" $QUOTA_FILE)
+          
+          if [ "$TODAY_DATA" == "null" ]; then
+            TODAY_DATA='{"commits_done":0,"commits_today_quota":3}'
+            jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$$.json && mv tmp.$$.json $QUOTA_FILE
+          fi
+          
+          QUOTA=$(echo $TODAY_DATA | jq -r .commits_today_quota)
+          DONE=$(echo $TODAY_DATA | jq -r .commits_done)
+          
+          echo "QUOTA=$QUOTA" >> $GITHUB_ENV
+          echo "DONE=$DONE" >> $GITHUB_ENV
+          echo "TODAY=$TODAY" >> $GITHUB_ENV
+          echo "Today: $TODAY | Done: $DONE | Quota: $QUOTA"
+
+      - name: Track progress and select next instruction (SEQUENTIAL)
         id: progress
         run: |
           PROGRESS_FILE=".progress.json"
@@ -121,64 +152,30 @@ jobs:
           COMPLETED=$(jq -r ".$COMPLETED_KEY | @json" $PROGRESS_FILE)
           COMPLETED_ARRAY=$(echo "$COMPLETED" | jq -r '.[]' | tr '\n' ' ')
           
-          # Find uncompleted instructions
-          UNCOMPLETED=()
+          # Find the FIRST uncompleted instruction (sequential order: 0, 1, 2, 3...)
+          SELECTED_INDEX=-1
           for i in $(seq 0 $((TOTAL_COUNT - 1))); do
             if ! echo "$COMPLETED_ARRAY" | grep -qw "$i"; then
-              UNCOMPLETED+=($i)
+              SELECTED_INDEX=$i
+              break
             fi
           done
           
-          # If all completed, reset and start over
-          if [ ${#UNCOMPLETED[@]} -eq 0 ]; then
+          # If all completed, reset and start over from 0
+          if [ $SELECTED_INDEX -eq -1 ]; then
             echo "All instructions completed! Resetting progress..."
-            jq ".$COMPLETED_KEY = []" $PROGRESS_FILE > tmp_progress.$.json && mv tmp_progress.$.json $PROGRESS_FILE
-            UNCOMPLETED=($(seq 0 $((TOTAL_COUNT - 1))))
+            jq ".$COMPLETED_KEY = []" $PROGRESS_FILE > tmp_progress.$$.json && mv tmp_progress.$$.json $PROGRESS_FILE
+            SELECTED_INDEX=0
+            REMAINING=$TOTAL_COUNT
+          else
+            # Count remaining
+            COMPLETED_COUNT=$(echo "$COMPLETED" | jq 'length')
+            REMAINING=$((TOTAL_COUNT - COMPLETED_COUNT))
           fi
-          
-          # Pick random uncompleted instruction
-          RANDOM_UNCOMPLETED_INDEX=$((RANDOM % ${#UNCOMPLETED[@]}))
-          SELECTED_INDEX=${UNCOMPLETED[$RANDOM_UNCOMPLETED_INDEX]}
           
           echo "SELECTED_INDEX=$SELECTED_INDEX" >> $GITHUB_ENV
           echo "COMPLETED_KEY=$COMPLETED_KEY" >> $GITHUB_ENV
-          echo "Selected instruction index: $SELECTED_INDEX (${#UNCOMPLETED[@]} remaining)"
-
-      - name: Setup daily quota
-        run: |
-          TODAY=$(date +%Y-%m-%d)
-          QUOTA_FILE=".monthly_commit_quota.json"
-          PROGRESS_FILE=".progress.json"
-          
-          # Create quota file if it doesn't exist
-          if [ ! -f "$QUOTA_FILE" ]; then
-            echo '{}' > $QUOTA_FILE
-          fi
-          
-          # Create progress file if it doesn't exist
-          if [ ! -f "$PROGRESS_FILE" ]; then
-            echo '{"frontend_completed":[],"backend_completed":[]}' > $PROGRESS_FILE
-            git config user.name "rasandu17"
-            git config user.email "rasandu17@gmail.com"
-            git add $PROGRESS_FILE
-            git diff --cached --quiet || git commit -m "Initialize progress tracker"
-            git push origin main || echo "Push failed"
-          fi
-          
-          TODAY_DATA=$(jq -r ".\"$TODAY\"" $QUOTA_FILE)
-          
-          if [ "$TODAY_DATA" == "null" ]; then
-            TODAY_DATA='{"commits_done":0,"commits_today_quota":3}'
-            jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$.json && mv tmp.$.json $QUOTA_FILE
-          fi
-          
-          QUOTA=$(echo $TODAY_DATA | jq -r .commits_today_quota)
-          DONE=$(echo $TODAY_DATA | jq -r .commits_done)
-          
-          echo "QUOTA=$QUOTA" >> $GITHUB_ENV
-          echo "DONE=$DONE" >> $GITHUB_ENV
-          echo "TODAY=$TODAY" >> $GITHUB_ENV
-          echo "Today: $TODAY | Done: $DONE | Quota: $QUOTA"
+          echo "📍 Selected instruction #$SELECTED_INDEX ($REMAINING remaining in order)"
 
       - name: Decide whether to commit this run
         id: randomcommit
@@ -193,7 +190,7 @@ jobs:
               echo "Random check passed - will commit"
             else
               echo "DO_COMMIT=false" >> $GITHUB_ENV
-              echo "Random check failed - skipping commit"
+              echo "Random check failed - skipping commit (instruction #$SELECTED_INDEX will be tried again next time)"
             fi
           fi
 
@@ -206,17 +203,16 @@ jobs:
           # Decode instructions
           INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
           
-          COUNT=$(echo "$INSTRUCTIONS" | jq length)
-          INDEX=$((RANDOM % COUNT))
-          STEP=$(echo "$INSTRUCTIONS" | jq -c .[$INDEX])
+          # Use the selected index from progress tracking
+          STEP=$(echo "$INSTRUCTIONS" | jq -c .[$SELECTED_INDEX])
           
           # Extract fields - handle both frontend and backend structures
           if [[ "$SELECTED_FILE" == "ai_instructions_backend.json" ]]; then
-            FILE_PATH=$(echo $STEP | jq -r '.output_files[0]')
+            FILE_PATH="Server/$(echo $STEP | jq -r '.output_files[0]')"
             DESC=$(echo $STEP | jq -r .description)
             TITLE=$(echo $STEP | jq -r .title)
           else
-            FILE_PATH=$(echo $STEP | jq -r .file)
+            FILE_PATH="Client/$(echo $STEP | jq -r .file)"
             INSTRUCTION=$(echo $STEP | jq -r .instruction)
             
             # Generate natural commit title based on the instruction
@@ -253,15 +249,23 @@ jobs:
           
           echo "$CODE" > "$FILE_PATH"
           
-          # Configure git (GPG signing is already configured by import-gpg action)
+          # Configure git with your GitHub username and email
           git config user.name "rasandu17"
           git config user.email "rasandu17@gmail.com"
           
-          # Update commits_done counter BEFORE committing
-          jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$.json && mv tmp.$.json .monthly_commit_quota.json
+          # Mark this instruction as completed in progress file
+          echo "Marking instruction #$SELECTED_INDEX as completed..."
+          jq ".$COMPLETED_KEY += [$SELECTED_INDEX] | .$COMPLETED_KEY |= unique | .$COMPLETED_KEY |= sort" .progress.json > tmp_progress_new.$$.json && mv tmp_progress_new.$$.json .progress.json
           
-          # Add both the generated code AND the quota file in one commit
-          git add "$FILE_PATH" .monthly_commit_quota.json
+          # Verify the update
+          echo "Progress file updated:"
+          cat .progress.json
+          
+          # Update commits_done counter
+          jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp_quota.$$.json && mv tmp_quota.$$.json .monthly_commit_quota.json
+          
+          # Add the generated code, progress tracker, and quota file in one commit
+          git add "$FILE_PATH" .progress.json .monthly_commit_quota.json
           
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -271,4 +275,4 @@ jobs:
           git commit -m "$TITLE" -m "$DESC"
           git push origin main
           
-          echo "Successfully pushed changes"
+          echo "✅ Successfully pushed changes"
