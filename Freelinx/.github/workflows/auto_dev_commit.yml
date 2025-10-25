@@ -1,0 +1,127 @@
+name: Dev Commit (Random Times & Monthly Quota)
+
+on:
+  schedule:
+    # Runs hourly between 5 AM and 10 PM UTC
+    - cron: "0 5-22 * * *"
+  workflow_dispatch:
+
+jobs:
+  auto-dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install jq and curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Select instruction file (frontend/backend)
+        id: pickfile
+        run: |
+          FILES=("ai_instructions.json" "ai_instructions_backend.json")
+          SELECTED_FILE=${FILES[$RANDOM % ${#FILES[@]}]}
+          echo "SELECTED_FILE=$SELECTED_FILE" >> $GITHUB_ENV
+          echo "Selected file: $SELECTED_FILE"
+
+      - name: Read instructions
+        id: read
+        run: |
+          echo "INSTRUCTIONS=$(cat $SELECTED_FILE | jq -c .steps)" >> $GITHUB_ENV
+
+      - name: Setup daily quota
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          QUOTA_FILE=".monthly_commit_quota.json"
+
+          # Get today’s quota
+          QUOTA=$(jq ".\"$TODAY\"" $QUOTA_FILE)
+          if [ "$QUOTA" == "null" ]; then
+            QUOTA=3  # fallback default
+          fi
+
+          # Setup counter file for today
+          COUNTER_FILE=".commit_count.json"
+          if [ ! -f "$COUNTER_FILE" ]; then
+            echo "{\"date\":\"$TODAY\",\"commits_done\":0,\"commits_today_quota\":$QUOTA}" > $COUNTER_FILE
+          else
+            DATE_STORED=$(jq -r .date $COUNTER_FILE)
+            if [ "$DATE_STORED" != "$TODAY" ]; then
+              echo "{\"date\":\"$TODAY\",\"commits_done\":0,\"commits_today_quota\":$QUOTA}" > $COUNTER_FILE
+            fi
+          fi
+
+      - name: Decide whether to commit this run
+        id: randomcommit
+        run: |
+          COUNTER_FILE=".commit_count.json"
+          QUOTA=$(jq .commits_today_quota $COUNTER_FILE)
+          DONE=$(jq .commits_done $COUNTER_FILE)
+
+          if [ "$DONE" -ge "$QUOTA" ]; then
+            echo "DO_COMMIT=false" >> $GITHUB_ENV
+            echo "Daily quota reached ($DONE/$QUOTA). Skipping commit."
+          else
+            # Random chance 50% to commit this run
+            RANDOM_CHANCE=$((RANDOM % 100))
+            if [ $RANDOM_CHANCE -lt 50 ]; then
+              echo "DO_COMMIT=true" >> $GITHUB_ENV
+            else
+              echo "DO_COMMIT=false" >> $GITHUB_ENV
+            fi
+            echo "Random chance: $RANDOM_CHANCE - Do commit: $DO_COMMIT"
+          fi
+
+      - name: Run commit if selected
+        if: env.DO_COMMIT == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          COUNT=$(echo $INSTRUCTIONS | jq length)
+          INDEX=$((RANDOM % COUNT))
+          STEP=$(echo $INSTRUCTIONS | jq -c .[$INDEX])
+          FILE_PATH=$(echo $STEP | jq -r .file)
+          DESC=$(echo $STEP | jq -r .instruction)
+          TITLE=$(echo $STEP | jq -r .title)
+
+          echo "Generating commit for: $TITLE"
+
+          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"contents\": [{
+                \"parts\": [{
+                  \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\"
+                }]
+              }]
+            }")
+
+          CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
+
+          # Check if file exists
+          if [ -f "$FILE_PATH" ]; then
+            echo "File exists. Updating: $FILE_PATH"
+          else
+            echo "File does not exist. Creating: $FILE_PATH"
+            mkdir -p $(dirname "$FILE_PATH")
+          fi
+
+          # Write the code
+          echo "$CODE" > "$FILE_PATH"
+
+          # Commit & push
+          git config user.name "Freelinx Dev"
+          git config user.email "dev@freelinx.dev"
+          git add .
+          git commit -m "$TITLE" -m "$DESC"
+          git push
+
+          echo "✅ Commit pushed: $TITLE"
+
+          # Update counter
+          COUNTER_FILE=".commit_count.json"
+          jq ".commits_done += 1" $COUNTER_FILE > tmp.$$.json && mv tmp.$$.json $COUNTER_FILE
+          git add $COUNTER_FILE
+          git commit -m "Update daily commit counter"
+          git push
