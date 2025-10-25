@@ -222,44 +222,22 @@ jobs:
           
           echo "Working on: $TITLE"
           echo "File: $FILE_PATH"
-          echo "Instruction: $DESC"
           
-          # Call Gemini API with better prompt
+          # Call Gemini API
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d @- <<EOF
-{
-  "contents": [{
-    "parts": [{
-      "text": "You are a coding assistant. Generate ONLY the code, no explanations, no markdown formatting.\n\nTask: $DESC\n\nRequirements:\n- Output ONLY valid, working code\n- NO markdown code blocks\n- NO explanations\n- Just raw code\n\nGenerate the code now:"
-    }]
-  }]
-}
-EOF
-          )
+            -d "{
+              \"contents\": [{
+                \"parts\": [{
+                  \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations, no markdown code blocks, just raw code.\"
+                }]
+              }]
+            }")
           
-          echo "API Response received"
+          CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
           
-          # Extract code from response
-          CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
-          
-          # Check if CODE is empty
-          if [ -z "$CODE" ] || [ "$CODE" == "null" ]; then
-            echo "❌ Error: Gemini API returned empty response"
-            echo "Full response: $RESPONSE"
-            exit 1
-          fi
-          
-          echo "Code extracted, length: ${#CODE} characters"
-          
-          # Remove markdown code blocks if present (multiple patterns)
-          CODE=$(echo "$CODE" | sed 's/^```[a-zA-Z]*$//' | sed 's/^```$//' | sed '/^```[a-zA-Z]*$/d' | sed '/^```$/d')
-          CODE=$(echo "$CODE" | sed '1{/^```/d}' | sed '${/^```/d}')
-          
-          # Trim leading/trailing whitespace
-          CODE=$(echo "$CODE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-          
-          echo "Code cleaned, final length: ${#CODE} characters"
+          # Remove markdown code blocks if present
+          CODE=$(echo "$CODE" | sed 's/^```[a-z]*\n//g' | sed 's/\n```$//g')
           
           # Create directory if needed
           if [ ! -f "$FILE_PATH" ]; then
@@ -269,17 +247,7 @@ EOF
             echo "Updating existing file: $FILE_PATH"
           fi
           
-          # Save code to file
           echo "$CODE" > "$FILE_PATH"
-          
-          # Verify file was created with content
-          if [ ! -s "$FILE_PATH" ]; then
-            echo "❌ Error: File is empty after writing"
-            exit 1
-          fi
-          
-          FILE_SIZE=$(wc -c < "$FILE_PATH")
-          echo "✅ File created successfully: $FILE_PATH ($FILE_SIZE bytes)"
           
           # Configure git with your GitHub username and email
           git config user.name "rasandu17"
