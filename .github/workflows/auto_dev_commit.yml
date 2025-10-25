@@ -115,8 +115,11 @@ jobs:
             TITLE=$(echo $STEP | jq -r .title)
           else
             FILE_PATH=$(echo $STEP | jq -r .file)
-            DESC=$(echo $STEP | jq -r .instruction)
-            TITLE="Update: $FILE_PATH"
+            INSTRUCTION=$(echo $STEP | jq -r .instruction)
+            
+            # Generate natural commit title based on the instruction
+            TITLE=$(echo "$INSTRUCTION" | sed 's/^Create /Add /' | sed 's/^Build /Implement /' | sed 's/^Design /Create /' | sed 's/\. .*$//')
+            DESC="$INSTRUCTION"
           fi
           
           echo "Working on: $TITLE"
