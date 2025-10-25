@@ -2,7 +2,7 @@ name: Dev Commit (Random Times & Monthly Quota)
 
 on:
   schedule:
-    - cron: "30 2-17 * * *" # 8:00 - 23:00 Sri Lanka Time = UTC 2:30 - 17:30
+    - cron: "30 2-17 * * *"  # Runs at 8:30 AM to 11:30 PM Sri Lanka time (UTC+5:30)
   workflow_dispatch:
 
 jobs:
@@ -33,7 +33,8 @@ jobs:
           else
             INSTRUCTIONS=$(echo "$RAW_JSON" | jq -c '.steps')
           fi
-          echo "INSTRUCTIONS=$INSTRUCTIONS" >> $GITHUB_ENV
+          # Encode JSON as base64 to safely store in env
+          echo "INSTRUCTIONS_B64=$(echo "$INSTRUCTIONS" | base64 -w 0)" >> $GITHUB_ENV
 
       - name: Setup daily quota
         run: |
@@ -72,30 +73,21 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TODAY: ${{ env.TODAY }}
-          INSTRUCTIONS: ${{ env.INSTRUCTIONS }}
         run: |
-          COUNT=$(echo "$INSTRUCTIONS" | jq length)
-          if [ "$COUNT" -eq 0 ]; then
-            echo "No instructions to run. Exiting."
-            exit 0
-          fi
+          # Decode instructions
+          INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
 
+          COUNT=$(echo "$INSTRUCTIONS" | jq length)
           INDEX=$((RANDOM % COUNT))
           STEP=$(echo "$INSTRUCTIONS" | jq -c .[$INDEX])
-
-          # Detect frontend vs backend JSON structure
-          FILE_PATH=$(echo "$STEP" | jq -r '.file // .output_files[0]')
-          DESC=$(echo "$STEP" | jq -r '.instruction // .description')
-          TITLE=$(echo "$STEP" | jq -r '.title // "Automated Commit"')
+          FILE_PATH=$(echo $STEP | jq -r .file)
+          DESC=$(echo $STEP | jq -r .instruction)
+          TITLE=$(echo $STEP | jq -r .title)
 
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"contents\": [{
-                \"parts\": [{
-                  \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\"
-                }]
-              }]
+              \"contents\": [ { \"parts\": [ { \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\" } ] } ]
             }")
 
           CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
@@ -107,17 +99,15 @@ jobs:
           fi
           echo "$CODE" > "$FILE_PATH"
 
-          # Configure git
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          # Commit generated code
           git add .
           git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
           git push || echo "Push failed, possibly no changes"
 
-          # Update commits_done in monthly quota
+          # Update commits_done
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
           git add .monthly_commit_quota.json
           git commit -m "Update daily commit counter" || echo "No changes to commit"
