@@ -33,23 +33,19 @@ jobs:
           else
             INSTRUCTIONS=$(echo "$RAW_JSON" | jq -c '.steps')
           fi
-          # Encode JSON as base64 to safely store in env
           echo "INSTRUCTIONS_B64=$(echo "$INSTRUCTIONS" | base64 -w 0)" >> $GITHUB_ENV
 
       - name: Setup daily quota
         run: |
           TODAY=$(date +%Y-%m-%d)
           QUOTA_FILE=".monthly_commit_quota.json"
-
           TODAY_DATA=$(jq ".\"$TODAY\"" $QUOTA_FILE)
           if [ "$TODAY_DATA" == "null" ]; then
             TODAY_DATA='{"commits_done":0,"commits_today_quota":3}'
             jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$$.json && mv tmp.$$.json $QUOTA_FILE
           fi
-
           QUOTA=$(echo $TODAY_DATA | jq .commits_today_quota)
           DONE=$(echo $TODAY_DATA | jq .commits_done)
-
           echo "QUOTA=$QUOTA" >> $GITHUB_ENV
           echo "DONE=$DONE" >> $GITHUB_ENV
 
@@ -71,48 +67,45 @@ jobs:
         if: env.DO_COMMIT == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}   # <- Use your PAT here
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           TODAY: ${{ env.TODAY }}
         run: |
           # Decode instructions
           INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
-      
+
           COUNT=$(echo "$INSTRUCTIONS" | jq length)
           INDEX=$((RANDOM % COUNT))
           STEP=$(echo "$INSTRUCTIONS" | jq -c .[$INDEX])
           FILE_PATH=$(echo $STEP | jq -r .file)
           DESC=$(echo $STEP | jq -r .instruction)
           TITLE=$(echo $STEP | jq -r .title)
-      
+
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
               \"contents\": [ { \"parts\": [ { \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\" } ] } ]
             }")
-      
+
           CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
-      
+
           if [ -f "$FILE_PATH" ]; then
             echo "File exists. Updating: $FILE_PATH"
           else
             mkdir -p $(dirname "$FILE_PATH")
           fi
           echo "$CODE" > "$FILE_PATH"
-      
-          # Configure git
+
+          # Git config
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
-      
-          # Set remote URL using PAT
           git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
-      
-          # Commit code changes
+
           git add .
           git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
-          git push
-      
-          # Update daily commit counter
+          git push || echo "Push failed, possibly no changes"
+
+          # Update commits_done
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
           git add .monthly_commit_quota.json
           git commit -m "Update daily commit counter" || echo "No changes to commit"
-          git push
+          git push || echo "Push failed, possibly no changes"
