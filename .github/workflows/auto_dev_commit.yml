@@ -53,6 +53,54 @@ jobs:
           echo "INSTRUCTIONS_B64=$(echo "$INSTRUCTIONS" | base64 -w 0)" >> $GITHUB_ENV
           echo "Instructions extracted successfully"
 
+      - name: Track progress and select uncompleted instruction
+        id: progress
+        run: |
+          PROGRESS_FILE=".progress.json"
+          
+          # Create progress file if it doesn't exist
+          if [ ! -f "$PROGRESS_FILE" ]; then
+            echo '{"frontend_completed":[],"backend_completed":[]}' > $PROGRESS_FILE
+          fi
+          
+          # Decode instructions
+          INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
+          TOTAL_COUNT=$(echo "$INSTRUCTIONS" | jq length)
+          
+          # Determine which completion array to use
+          if [[ "$SELECTED_FILE" == "ai_instructions_backend.json" ]]; then
+            COMPLETED_KEY="backend_completed"
+          else
+            COMPLETED_KEY="frontend_completed"
+          fi
+          
+          # Get completed instruction indices
+          COMPLETED=$(jq -r ".$COMPLETED_KEY | @json" $PROGRESS_FILE)
+          COMPLETED_ARRAY=$(echo "$COMPLETED" | jq -r '.[]' | tr '\n' ' ')
+          
+          # Find uncompleted instructions
+          UNCOMPLETED=()
+          for i in $(seq 0 $((TOTAL_COUNT - 1))); do
+            if ! echo "$COMPLETED_ARRAY" | grep -qw "$i"; then
+              UNCOMPLETED+=($i)
+            fi
+          done
+          
+          # If all completed, reset and start over
+          if [ ${#UNCOMPLETED[@]} -eq 0 ]; then
+            echo "All instructions completed! Resetting progress..."
+            jq ".$COMPLETED_KEY = []" $PROGRESS_FILE > tmp_progress.$.json && mv tmp_progress.$.json $PROGRESS_FILE
+            UNCOMPLETED=($(seq 0 $((TOTAL_COUNT - 1))))
+          fi
+          
+          # Pick random uncompleted instruction
+          RANDOM_UNCOMPLETED_INDEX=$((RANDOM % ${#UNCOMPLETED[@]}))
+          SELECTED_INDEX=${UNCOMPLETED[$RANDOM_UNCOMPLETED_INDEX]}
+          
+          echo "SELECTED_INDEX=$SELECTED_INDEX" >> $GITHUB_ENV
+          echo "COMPLETED_KEY=$COMPLETED_KEY" >> $GITHUB_ENV
+          echo "Selected instruction index: $SELECTED_INDEX (${#UNCOMPLETED[@]} remaining)"
+
       - name: Setup daily quota
         run: |
           TODAY=$(date +%Y-%m-%d)
