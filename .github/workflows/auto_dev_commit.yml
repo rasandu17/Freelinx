@@ -225,27 +225,18 @@ jobs:
           echo "Instruction: $DESC"
           
           # Call Gemini API with better prompt
-          PROMPT="You are a coding assistant. Generate ONLY the code, no explanations, no markdown formatting.
-
-Task: $DESC
-
-Requirements:
-- Output ONLY valid, working code
-- NO markdown code blocks (no \`\`\`)
-- NO explanations or comments about the code
-- Just the raw code that can be directly saved to a file
-
-Generate the code now:"
-
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"contents\": [{
-                \"parts\": [{
-                  \"text\": $(echo "$PROMPT" | jq -Rs .)
-                }]
-              }]
-            }")
+            -d @- <<EOF
+{
+  "contents": [{
+    "parts": [{
+      "text": "You are a coding assistant. Generate ONLY the code, no explanations, no markdown formatting.\n\nTask: $DESC\n\nRequirements:\n- Output ONLY valid, working code\n- NO markdown code blocks\n- NO explanations\n- Just raw code\n\nGenerate the code now:"
+    }]
+  }]
+}
+EOF
+          )
           
           echo "API Response received"
           
