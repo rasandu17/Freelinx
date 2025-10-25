@@ -105,17 +105,28 @@ jobs:
         run: |
           TODAY=$(date +%Y-%m-%d)
           QUOTA_FILE=".monthly_commit_quota.json"
+          PROGRESS_FILE=".progress.json"
           
           # Create quota file if it doesn't exist
           if [ ! -f "$QUOTA_FILE" ]; then
             echo '{}' > $QUOTA_FILE
           fi
           
+          # Create progress file if it doesn't exist
+          if [ ! -f "$PROGRESS_FILE" ]; then
+            echo '{"frontend_completed":[],"backend_completed":[]}' > $PROGRESS_FILE
+            git config user.name "rasandu17"
+            git config user.email "rasandu17@gmail.com"
+            git add $PROGRESS_FILE
+            git diff --cached --quiet || git commit -m "Initialize progress tracker"
+            git push origin main || echo "Push failed"
+          fi
+          
           TODAY_DATA=$(jq -r ".\"$TODAY\"" $QUOTA_FILE)
           
           if [ "$TODAY_DATA" == "null" ]; then
             TODAY_DATA='{"commits_done":0,"commits_today_quota":3}'
-            jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$$.json && mv tmp.$$.json $QUOTA_FILE
+            jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$.json && mv tmp.$.json $QUOTA_FILE
           fi
           
           QUOTA=$(echo $TODAY_DATA | jq -r .commits_today_quota)
