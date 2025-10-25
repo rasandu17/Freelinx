@@ -8,10 +8,15 @@ on:
 jobs:
   auto-dev:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Grant write permission to the workflow
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}  # Use PAT from the start
+          fetch-depth: 0
 
       - name: Install jq and curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
@@ -22,44 +27,63 @@ jobs:
           FILES=("ai_instructions.json" "ai_instructions_backend.json")
           SELECTED_FILE=${FILES[$RANDOM % ${#FILES[@]}]}
           echo "SELECTED_FILE=$SELECTED_FILE" >> $GITHUB_ENV
+          echo "Selected file: $SELECTED_FILE"
 
       - name: Read instructions
         id: read
         run: |
           RAW_JSON=$(cat $SELECTED_FILE)
-          IS_ARRAY=$(echo "$RAW_JSON" | jq 'if type=="array" then 1 else 0 end')
-          if [ "$IS_ARRAY" -eq 1 ]; then
-            INSTRUCTIONS="$RAW_JSON"
-          else
+          
+          # Check if it's the backend file with nested structure
+          if [[ "$SELECTED_FILE" == "ai_instructions_backend.json" ]]; then
             INSTRUCTIONS=$(echo "$RAW_JSON" | jq -c '.steps')
+          else
+            # Frontend file is already an array
+            INSTRUCTIONS="$RAW_JSON"
           fi
+          
           echo "INSTRUCTIONS_B64=$(echo "$INSTRUCTIONS" | base64 -w 0)" >> $GITHUB_ENV
+          echo "Instructions extracted successfully"
 
       - name: Setup daily quota
         run: |
           TODAY=$(date +%Y-%m-%d)
           QUOTA_FILE=".monthly_commit_quota.json"
-          TODAY_DATA=$(jq ".\"$TODAY\"" $QUOTA_FILE)
+          
+          # Create quota file if it doesn't exist
+          if [ ! -f "$QUOTA_FILE" ]; then
+            echo '{}' > $QUOTA_FILE
+          fi
+          
+          TODAY_DATA=$(jq -r ".\"$TODAY\"" $QUOTA_FILE)
+          
           if [ "$TODAY_DATA" == "null" ]; then
             TODAY_DATA='{"commits_done":0,"commits_today_quota":3}'
             jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$$.json && mv tmp.$$.json $QUOTA_FILE
           fi
-          QUOTA=$(echo $TODAY_DATA | jq .commits_today_quota)
-          DONE=$(echo $TODAY_DATA | jq .commits_done)
+          
+          QUOTA=$(echo $TODAY_DATA | jq -r .commits_today_quota)
+          DONE=$(echo $TODAY_DATA | jq -r .commits_done)
+          
           echo "QUOTA=$QUOTA" >> $GITHUB_ENV
           echo "DONE=$DONE" >> $GITHUB_ENV
+          echo "TODAY=$TODAY" >> $GITHUB_ENV
+          echo "Today: $TODAY | Done: $DONE | Quota: $QUOTA"
 
       - name: Decide whether to commit this run
         id: randomcommit
         run: |
           if [ $DONE -ge $QUOTA ]; then
             echo "DO_COMMIT=false" >> $GITHUB_ENV
+            echo "Quota reached for today ($DONE/$QUOTA)"
           else
             RANDOM_CHANCE=$((RANDOM % 100))
             if [ $RANDOM_CHANCE -lt 50 ]; then
               echo "DO_COMMIT=true" >> $GITHUB_ENV
+              echo "Random check passed - will commit"
             else
               echo "DO_COMMIT=false" >> $GITHUB_ENV
+              echo "Random check failed - skipping commit"
             fi
           fi
 
@@ -68,44 +92,76 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          TODAY: ${{ env.TODAY }}
         run: |
           # Decode instructions
           INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
-
+          
           COUNT=$(echo "$INSTRUCTIONS" | jq length)
           INDEX=$((RANDOM % COUNT))
           STEP=$(echo "$INSTRUCTIONS" | jq -c .[$INDEX])
-          FILE_PATH=$(echo $STEP | jq -r .file)
-          DESC=$(echo $STEP | jq -r .instruction)
-          TITLE=$(echo $STEP | jq -r .title)
-
+          
+          # Extract fields - handle both frontend and backend structures
+          if [[ "$SELECTED_FILE" == "ai_instructions_backend.json" ]]; then
+            FILE_PATH=$(echo $STEP | jq -r '.output_files[0]')
+            DESC=$(echo $STEP | jq -r .description)
+            TITLE=$(echo $STEP | jq -r .title)
+          else
+            FILE_PATH=$(echo $STEP | jq -r .file)
+            DESC=$(echo $STEP | jq -r .instruction)
+            TITLE="Update: $FILE_PATH"
+          fi
+          
+          echo "Working on: $TITLE"
+          echo "File: $FILE_PATH"
+          
+          # Call Gemini API
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"contents\": [ { \"parts\": [ { \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\" } ] } ]
+              \"contents\": [{
+                \"parts\": [{
+                  \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations, no markdown code blocks, just raw code.\"
+                }]
+              }]
             }")
-
+          
           CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
-
-          if [ -f "$FILE_PATH" ]; then
-            echo "File exists. Updating: $FILE_PATH"
-          else
+          
+          # Remove markdown code blocks if present
+          CODE=$(echo "$CODE" | sed 's/^```[a-z]*\n//g' | sed 's/\n```$//g')
+          
+          # Create directory if needed
+          if [ ! -f "$FILE_PATH" ]; then
             mkdir -p $(dirname "$FILE_PATH")
+            echo "Created new file: $FILE_PATH"
+          else
+            echo "Updating existing file: $FILE_PATH"
           fi
+          
           echo "$CODE" > "$FILE_PATH"
-
-          # Git config
+          
+          # Configure git with PAT
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
-          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
-
-          git add .
-          git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
-          git push || echo "Push failed, possibly no changes"
-
-          # Update commits_done
+          
+          # Add and commit the generated code
+          git add "$FILE_PATH"
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "$TITLE" -m "$DESC"
+          git push origin main
+          
+          echo "Successfully pushed code changes"
+          
+          # Update commits_done counter
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
+          
           git add .monthly_commit_quota.json
-          git commit -m "Update daily commit counter" || echo "No changes to commit"
-          git push || echo "Push failed, possibly no changes"
+          git commit -m "Update daily commit counter [skip ci]"
+          git push origin main
+          
+          echo "Successfully updated quota counter"
