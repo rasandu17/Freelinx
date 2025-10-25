@@ -65,6 +65,7 @@ jobs:
         if: env.DO_COMMIT == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COUNT=$(echo $INSTRUCTIONS | jq length)
           INDEX=$((RANDOM % COUNT))
@@ -92,15 +93,18 @@ jobs:
           fi
           echo "$CODE" > "$FILE_PATH"
 
+          # Configure git to use the GitHub Actions token
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
-          git add .
-          git commit -m "$TITLE" -m "$DESC"
-          git push
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          # Update commits_done in monthly file
-          TODAY=$(date +%Y-%m-%d)
+          # Commit and push the generated code
+          git add .
+          git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
+          git push origin HEAD
+
+          # Update commits_done in monthly file and push
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
           git add .monthly_commit_quota.json
-          git commit -m "Update daily commit counter"
-          git push
+          git commit -m "Update daily commit counter" || echo "No changes to commit"
+          git push origin HEAD
