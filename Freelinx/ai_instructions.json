@@ -1,0 +1,118 @@
+[
+  {
+    "file": "src/App.jsx",
+    "instruction": "Set up the main App component with React Router and routes for Login, Signup, Dashboard, Clients, Projects, Invoices, Reports, and Settings pages."
+  },
+  {
+    "file": "src/components/Navbar.jsx",
+    "instruction": "Create a responsive Navbar using Tailwind CSS with links to Dashboard, Clients, Projects, and Invoices. Include a logo area and profile icon."
+  },
+  {
+    "file": "src/components/Sidebar.jsx",
+    "instruction": "Build a collapsible Sidebar using Tailwind CSS with navigation links and active state highlighting."
+  },
+  {
+    "file": "src/pages/Login.jsx",
+    "instruction": "Design a clean login page using Tailwind CSS with email and password fields, a login button, and a gradient background."
+  },
+  {
+    "file": "src/pages/Signup.jsx",
+    "instruction": "Create a Signup page similar to Login with inputs for name, email, and password. Add a styled register button."
+  },
+  {
+    "file": "src/pages/Dashboard.jsx",
+    "instruction": "Create a dashboard page that shows total income, clients, projects, and invoices summary in Tailwind-styled cards."
+  },
+  {
+    "file": "src/components/IncomeChart.jsx",
+    "instruction": "Create a Recharts line chart that displays monthly income. Include labels, grid, and tooltip styling."
+  },
+  {
+    "file": "src/components/StatCard.jsx",
+    "instruction": "Build a reusable StatCard component to display metrics like total clients, active projects, and pending invoices."
+  },
+  {
+    "file": "src/pages/Clients.jsx",
+    "instruction": "Create a Clients page displaying a table of clients with columns for name, company, and contact info. Include an Add Client button."
+  },
+  {
+    "file": "src/components/ClientForm.jsx",
+    "instruction": "Create a ClientForm component with input fields for client name, company, email, and phone. Use Tailwind forms and validation."
+  },
+  {
+    "file": "src/pages/Projects.jsx",
+    "instruction": "Create a Projects page listing projects in a table with columns for project name, client, deadline, and status."
+  },
+  {
+    "file": "src/components/ProjectCard.jsx",
+    "instruction": "Create a ProjectCard component to show project details including name, client, progress bar, and colored status badge."
+  },
+  {
+    "file": "src/pages/Invoices.jsx",
+    "instruction": "Create an Invoices page listing all invoices in a table with columns for invoice number, client, date, and amount."
+  },
+  {
+    "file": "src/components/InvoiceCard.jsx",
+    "instruction": "Create a compact InvoiceCard showing invoice details and payment status badge using Tailwind CSS."
+  },
+  {
+    "file": "src/components/AddInvoiceModal.jsx",
+    "instruction": "Create a modal for adding a new invoice. Include fields for client selection, amount, and date using Tailwind forms."
+  },
+  {
+    "file": "src/components/NotificationBell.jsx",
+    "instruction": "Create a notification bell icon using React Toastify that triggers toast notifications for upcoming tasks."
+  },
+  {
+    "file": "src/components/TaskReminderList.jsx",
+    "instruction": "Create a small panel listing upcoming tasks and reminders styled with Tailwind CSS cards."
+  },
+  {
+    "file": "src/components/Footer.jsx",
+    "instruction": "Create a simple footer component with centered text and a muted Tailwind color scheme."
+  },
+  {
+    "file": "src/pages/Settings.jsx",
+    "instruction": "Create a Settings page for managing user profile and preferences using Tailwind-styled input fields."
+  },
+  {
+    "file": "src/hooks/useAuth.js",
+    "instruction": "Create a custom React hook to manage authentication state, login, and logout functions using localStorage for token storage."
+  },
+  {
+    "file": "src/context/AuthContext.jsx",
+    "instruction": "Create a React Context for authentication with provider and consumer for managing user data globally."
+  },
+  {
+    "file": "src/utils/formatCurrency.js",
+    "instruction": "Write a helper function to format numbers into currency format like $12,340.50."
+  },
+  {
+    "file": "src/utils/dateHelpers.js",
+    "instruction": "Create helper functions to format dates and calculate due days or remaining time for projects."
+  },
+  {
+    "file": "src/components/LoadingSpinner.jsx",
+    "instruction": "Create a simple Tailwind-based loading spinner component with smooth animation."
+  },
+  {
+    "file": "src/components/EmptyState.jsx",
+    "instruction": "Create a reusable EmptyState component that shows a friendly message when no data is available."
+  },
+  {
+    "file": "src/components/ThemeToggle.jsx",
+    "instruction": "Add a dark/light mode toggle button using Tailwind dark classes and store user preference in localStorage."
+  },
+  {
+    "file": "src/components/Breadcrumb.jsx",
+    "instruction": "Create a breadcrumb navigation component using Tailwind for spacing and active route highlight."
+  },
+  {
+    "file": "src/pages/Reports.jsx",
+    "instruction": "Build a Reports page showing multiple charts for income, project status, and client activity using Recharts."
+  },
+  {
+    "file": "src/components/IncomeOverviewCard.jsx",
+    "instruction": "Create a small summary card displaying total income, styled with Tailwind and a positive/negative trend icon."
+  }
+]

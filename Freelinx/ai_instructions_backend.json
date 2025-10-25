@@ -1,0 +1,58 @@
+{
+  "project_name": "Freelinx Backend",
+  "goal": "Build a modular backend for managing freelancers' clients, projects, and invoices with authentication and analytics.",
+  "tech_stack": {
+    "backend": ["Node.js", "Express", "MongoDB", "Mongoose", "JWT", "dotenv", "bcryptjs", "nodemailer"]
+  },
+  "steps": [
+    {
+      "title": "Initialize Project",
+      "description": "Create an Express server with basic setup. Include dotenv, cors, and connection to MongoDB. Add root route '/' returning a health message.",
+      "output_files": ["server.js", "config/db.js", ".env.example"]
+    },
+    {
+      "title": "Setup Authentication System",
+      "description": "Implement JWT-based authentication. Add user registration, login, and middleware to protect routes.",
+      "output_files": ["models/User.js", "controllers/authController.js", "routes/authRoutes.js", "middleware/authMiddleware.js", "utils/generateToken.js"]
+    },
+    {
+      "title": "Create Client Management API",
+      "description": "Implement CRUD operations for managing clients (name, email, phone, company, notes). Protected by JWT.",
+      "output_files": ["models/Client.js", "controllers/clientController.js", "routes/clientRoutes.js"]
+    },
+    {
+      "title": "Create Project Management API",
+      "description": "Add project creation, editing, deletion, and status update features linked to clients. Include payment tracking.",
+      "output_files": ["models/Project.js", "controllers/projectController.js", "routes/projectRoutes.js"]
+    },
+    {
+      "title": "Add Invoice Generation System",
+      "description": "Create invoice model and endpoints for creating, updating, and listing invoices. Include PDF generation and optional email sending.",
+      "output_files": ["models/Invoice.js", "controllers/invoiceController.js", "routes/invoiceRoutes.js"]
+    },
+    {
+      "title": "Add Analytics Endpoints",
+      "description": "Add API routes to calculate total income, project completion rates, and top clients for dashboard charts.",
+      "output_files": ["controllers/analyticsController.js", "routes/analyticsRoutes.js"]
+    },
+    {
+      "title": "Add Cron Jobs for Reminders",
+      "description": "Use node-cron to send automated reminders for unpaid invoices or pending projects daily.",
+      "output_files": ["utils/reminderCron.js"]
+    },
+    {
+      "title": "Improve Security and Error Handling",
+      "description": "Add centralized error handling middleware, input validation, and security improvements like rate limiting and helmet.",
+      "output_files": ["middleware/errorMiddleware.js", "server.js"]
+    },
+    {
+      "title": "Final Integration",
+      "description": "Connect all routes to server.js, ensure environment variables and MongoDB connection work in production. Test all endpoints.",
+      "output_files": ["server.js"]
+    }
+  ],
+  "testing": {
+    "method": "Postman or Thunder Client",
+    "notes": "After each step, test routes with sample data and verify JWT authentication is functioning."
+  }
+}
