@@ -2,7 +2,7 @@ name: Dev Commit (Random Times & Monthly Quota)
 
 on:
   schedule:
-    - cron: "30 2-17 * * *"  # Runs hourly 8 AM - 11 PM SLT (UTC+5:30)
+    - cron: "30 2-17 * * *" # 8:00 - 23:00 Sri Lanka Time = UTC 2:30 - 17:30
   workflow_dispatch:
 
 jobs:
@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true  # ensures GITHUB_TOKEN works for push
 
       - name: Install jq and curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
@@ -28,12 +26,14 @@ jobs:
       - name: Read instructions
         id: read
         run: |
-            INSTRUCTIONS=$(cat $SELECTED_FILE | jq -c .)
-            if [ "$INSTRUCTIONS" == "null" ] || [ "$INSTRUCTIONS" == "[]" ]; then
-              echo "No instructions found in $SELECTED_FILE. Exiting."
-              exit 0
-            fi
-            echo "INSTRUCTIONS=$INSTRUCTIONS" >> $GITHUB_ENV
+          RAW_JSON=$(cat $SELECTED_FILE)
+          IS_ARRAY=$(echo "$RAW_JSON" | jq 'if type=="array" then 1 else 0 end')
+          if [ "$IS_ARRAY" -eq 1 ]; then
+            INSTRUCTIONS="$RAW_JSON"
+          else
+            INSTRUCTIONS=$(echo "$RAW_JSON" | jq -c '.steps')
+          fi
+          echo "INSTRUCTIONS=$INSTRUCTIONS" >> $GITHUB_ENV
 
       - name: Setup daily quota
         run: |
@@ -70,18 +70,32 @@ jobs:
         if: env.DO_COMMIT == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TODAY: ${{ env.TODAY }}
+          INSTRUCTIONS: ${{ env.INSTRUCTIONS }}
         run: |
-          COUNT=$(echo $INSTRUCTIONS | jq length)
+          COUNT=$(echo "$INSTRUCTIONS" | jq length)
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No instructions to run. Exiting."
+            exit 0
+          fi
+
           INDEX=$((RANDOM % COUNT))
-          STEP=$(echo $INSTRUCTIONS | jq -c .[$INDEX])
-          FILE_PATH=$(echo $STEP | jq -r .file)
-          DESC=$(echo $STEP | jq -r .instruction)
-          TITLE=$(echo $STEP | jq -r .title)
+          STEP=$(echo "$INSTRUCTIONS" | jq -c .[$INDEX])
+
+          # Detect frontend vs backend JSON structure
+          FILE_PATH=$(echo "$STEP" | jq -r '.file // .output_files[0]')
+          DESC=$(echo "$STEP" | jq -r '.instruction // .description')
+          TITLE=$(echo "$STEP" | jq -r '.title // "Automated Commit"')
 
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"contents\": [ { \"parts\": [ { \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\" } ] } ]
+              \"contents\": [{
+                \"parts\": [{
+                  \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\"
+                }]
+              }]
             }")
 
           CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
@@ -96,13 +110,14 @@ jobs:
           # Configure git
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          # Commit and push generated code
+          # Commit generated code
           git add .
           git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
           git push || echo "Push failed, possibly no changes"
 
-          # Update commits_done in monthly file and push
+          # Update commits_done in monthly quota
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
           git add .monthly_commit_quota.json
           git commit -m "Update daily commit counter" || echo "No changes to commit"
