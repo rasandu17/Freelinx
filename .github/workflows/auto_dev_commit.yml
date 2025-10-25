@@ -29,6 +29,29 @@ jobs:
       - name: Install jq and curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
+      - name: Initialize progress tracker file
+        run: |
+          PROGRESS_FILE=".progress.json"
+          
+          # Check if progress file exists
+          if [ ! -f "$PROGRESS_FILE" ]; then
+            echo "Creating progress tracker file..."
+            echo '{"frontend_completed":[],"backend_completed":[]}' > $PROGRESS_FILE
+            
+            # Configure git
+            git config user.name "rasandu17"
+            git config user.email "rasandu17@gmail.com"
+            
+            # Commit and push the progress file
+            git add $PROGRESS_FILE
+            git commit -m "Initialize progress tracker"
+            git push origin main
+            
+            echo "✅ Progress tracker created and committed"
+          else
+            echo "✅ Progress tracker already exists"
+          fi
+
       - name: Select instruction file (frontend first, then backend)
         id: pickfile
         run: |
