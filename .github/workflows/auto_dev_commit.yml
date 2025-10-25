@@ -28,7 +28,12 @@ jobs:
       - name: Read instructions
         id: read
         run: |
-          echo "INSTRUCTIONS=$(cat $SELECTED_FILE | jq -c .steps)" >> $GITHUB_ENV
+            INSTRUCTIONS=$(cat $SELECTED_FILE | jq -c .)
+            if [ "$INSTRUCTIONS" == "null" ] || [ "$INSTRUCTIONS" == "[]" ]; then
+              echo "No instructions found in $SELECTED_FILE. Exiting."
+              exit 0
+            fi
+            echo "INSTRUCTIONS=$INSTRUCTIONS" >> $GITHUB_ENV
 
       - name: Setup daily quota
         run: |
