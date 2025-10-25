@@ -29,11 +29,36 @@ jobs:
       - name: Install jq and curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      - name: Select instruction file (frontend/backend)
+      - name: Select instruction file (frontend first, then backend)
         id: pickfile
         run: |
-          FILES=("ai_instructions.json" "ai_instructions_backend.json")
-          SELECTED_FILE=${FILES[$RANDOM % ${#FILES[@]}]}
+          PROGRESS_FILE=".progress.json"
+          
+          # Get completed counts
+          FRONTEND_DONE=$(jq -r '.frontend_completed | length' $PROGRESS_FILE)
+          BACKEND_DONE=$(jq -r '.backend_completed | length' $PROGRESS_FILE)
+          
+          # Total instructions count
+          FRONTEND_TOTAL=$(jq length ai_instructions.json)
+          BACKEND_TOTAL=$(jq '.steps | length' ai_instructions_backend.json)
+          
+          # Decide which file to use
+          if [ $FRONTEND_DONE -lt $FRONTEND_TOTAL ]; then
+            # Frontend not finished, use it
+            SELECTED_FILE="ai_instructions.json"
+            echo "📱 Working on frontend ($FRONTEND_DONE/$FRONTEND_TOTAL completed)"
+          elif [ $BACKEND_DONE -lt $BACKEND_TOTAL ]; then
+            # Frontend done, work on backend
+            SELECTED_FILE="ai_instructions_backend.json"
+            echo "⚙️ Working on backend ($BACKEND_DONE/$BACKEND_TOTAL completed)"
+          else
+            # Both done, reset and start over with frontend
+            echo "🎉 All instructions completed! Starting over..."
+            jq '.frontend_completed = [] | .backend_completed = []' $PROGRESS_FILE > tmp_progress.$.json && mv tmp_progress.$.json $PROGRESS_FILE
+            SELECTED_FILE="ai_instructions.json"
+            echo "📱 Restarting with frontend"
+          fi
+          
           echo "SELECTED_FILE=$SELECTED_FILE" >> $GITHUB_ENV
           echo "Selected file: $SELECTED_FILE"
 
@@ -57,11 +82,6 @@ jobs:
         id: progress
         run: |
           PROGRESS_FILE=".progress.json"
-          
-          # Create progress file if it doesn't exist
-          if [ ! -f "$PROGRESS_FILE" ]; then
-            echo '{"frontend_completed":[],"backend_completed":[]}' > $PROGRESS_FILE
-          fi
           
           # Decode instructions
           INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
