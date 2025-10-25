@@ -1,9 +1,10 @@
 name: Dev Commit (Random Times & Monthly Quota)
 
 on:
-  schedule:
-    - cron: "0 5-22 * * *"  # Runs hourly between 5 AM and 10 PM UTC
   workflow_dispatch:
+  schedule:
+    # Runs every 30 minutes UTC (2:30 AM – 5:30 PM UTC = 8 AM – 11 PM SL)
+    - cron: "0,30 2-17 * * *"
 
 jobs:
   auto-dev:
@@ -16,7 +17,7 @@ jobs:
       - name: Install jq and curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      - name: Select instruction file (frontend/backend)
+      - name: Select instruction file
         id: pickfile
         run: |
           FILES=("ai_instructions.json" "ai_instructions_backend.json")
@@ -33,11 +34,11 @@ jobs:
           TODAY=$(date +%Y-%m-%d)
           QUOTA_FILE=".monthly_commit_quota.json"
 
-          # Get today's quota
           TODAY_DATA=$(jq ".\"$TODAY\"" $QUOTA_FILE)
           if [ "$TODAY_DATA" == "null" ]; then
-            echo "Today not found in quota file, defaulting to 3 commits"
-            TODAY_DATA='{"commits_done":0,"commits_today_quota":3}'
+            # Randomize daily quota 1–15 commits
+            DAILY_QUOTA=$(( (RANDOM % 15) + 1 ))
+            TODAY_DATA="{\"commits_done\":0,\"commits_today_quota\":$DAILY_QUOTA}"
             jq ". + {\"$TODAY\": $TODAY_DATA}" $QUOTA_FILE > tmp.$$.json && mv tmp.$$.json $QUOTA_FILE
           fi
 
@@ -53,13 +54,15 @@ jobs:
           if [ $DONE -ge $QUOTA ]; then
             echo "DO_COMMIT=false" >> $GITHUB_ENV
           else
+            # Random chance per run 40–70% to spread commits realistically
             RANDOM_CHANCE=$((RANDOM % 100))
-            if [ $RANDOM_CHANCE -lt 50 ]; then
+            if [ $RANDOM_CHANCE -lt 60 ]; then
               echo "DO_COMMIT=true" >> $GITHUB_ENV
             else
               echo "DO_COMMIT=false" >> $GITHUB_ENV
             fi
           fi
+          echo "Random chance: $RANDOM_CHANCE - Do commit: $DO_COMMIT"
 
       - name: Run commit if selected
         if: env.DO_COMMIT == 'true'
@@ -77,11 +80,11 @@ jobs:
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
-              \"contents\": [{
-                \"parts\": [{
+              \"contents\": [({
+                \"parts\": [({
                   \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\"
-                }]
-              }]
+                })]
+              })]
             }")
 
           CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
@@ -93,17 +96,15 @@ jobs:
           fi
           echo "$CODE" > "$FILE_PATH"
 
-          # Configure git to use the GitHub Actions token
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
 
-          # Commit and push the generated code
           git add .
           git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
           git push origin HEAD
 
-          # Update commits_done in monthly file and push
+          # Update commits_done in monthly file
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
           git add .monthly_commit_quota.json
           git commit -m "Update daily commit counter" || echo "No changes to commit"
