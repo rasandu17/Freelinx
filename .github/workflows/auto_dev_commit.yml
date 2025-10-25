@@ -140,12 +140,15 @@ jobs:
           
           echo "$CODE" > "$FILE_PATH"
           
-          # Configure git with PAT
-          git config user.name "Freelinx Dev"
-          git config user.email "dev@freelinx.dev"
+          # Configure git with your GitHub username and email
+          git config user.name "rasandu17"
+          git config user.email "rasandu17@gmail.com"
           
-          # Add and commit the generated code
-          git add "$FILE_PATH"
+          # Update commits_done counter BEFORE committing
+          jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$.json && mv tmp.$.json .monthly_commit_quota.json
+          
+          # Add both the generated code AND the quota file in one commit
+          git add "$FILE_PATH" .monthly_commit_quota.json
           
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -155,13 +158,4 @@ jobs:
           git commit -m "$TITLE" -m "$DESC"
           git push origin main
           
-          echo "Successfully pushed code changes"
-          
-          # Update commits_done counter
-          jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
-          
-          git add .monthly_commit_quota.json
-          git commit -m "Update daily commit counter [skip ci]"
-          git push origin main
-          
-          echo "Successfully updated quota counter"
+          echo "Successfully pushed changes"
