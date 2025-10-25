@@ -18,6 +18,14 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}  # Use PAT from the start
           fetch-depth: 0
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
       - name: Install jq and curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
@@ -140,7 +148,7 @@ jobs:
           
           echo "$CODE" > "$FILE_PATH"
           
-          # Configure git with your GitHub username and email
+          # Configure git (GPG signing is already configured by import-gpg action)
           git config user.name "rasandu17"
           git config user.email "rasandu17@gmail.com"
           
