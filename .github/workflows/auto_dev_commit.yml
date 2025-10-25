@@ -71,44 +71,48 @@ jobs:
         if: env.DO_COMMIT == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}   # <- Use your PAT here
           TODAY: ${{ env.TODAY }}
         run: |
           # Decode instructions
           INSTRUCTIONS=$(echo "$INSTRUCTIONS_B64" | base64 --decode)
-
+      
           COUNT=$(echo "$INSTRUCTIONS" | jq length)
           INDEX=$((RANDOM % COUNT))
           STEP=$(echo "$INSTRUCTIONS" | jq -c .[$INDEX])
           FILE_PATH=$(echo $STEP | jq -r .file)
           DESC=$(echo $STEP | jq -r .instruction)
           TITLE=$(echo $STEP | jq -r .title)
-
+      
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{
               \"contents\": [ { \"parts\": [ { \"text\": \"Write code for: $DESC. Output only valid code (React or Node.js depending on context). No explanations.\" } ] } ]
             }")
-
+      
           CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
-
+      
           if [ -f "$FILE_PATH" ]; then
             echo "File exists. Updating: $FILE_PATH"
           else
             mkdir -p $(dirname "$FILE_PATH")
           fi
           echo "$CODE" > "$FILE_PATH"
-
+      
+          # Configure git
           git config user.name "Freelinx Dev"
           git config user.email "dev@freelinx.dev"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-
+      
+          # Set remote URL using PAT
+          git remote set-url origin https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }}.git
+      
+          # Commit code changes
           git add .
           git commit -m "$TITLE" -m "$DESC" || echo "No changes to commit"
-          git push || echo "Push failed, possibly no changes"
-
-          # Update commits_done
+          git push
+      
+          # Update daily commit counter
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp.$$.json && mv tmp.$$.json .monthly_commit_quota.json
           git add .monthly_commit_quota.json
           git commit -m "Update daily commit counter" || echo "No changes to commit"
-          git push || echo "Push failed, possibly no changes"
+          git push
