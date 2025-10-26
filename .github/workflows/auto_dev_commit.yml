@@ -223,13 +223,27 @@ jobs:
           echo "Working on: $TITLE"
           echo "File: $FILE_PATH"
           
-          # Escape description for JSON
-          DESC_ESCAPED=$(echo "$DESC" | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n')
+          # Determine the technology context
+          if [[ "$SELECTED_FILE" == "ai_instructions_backend.json" ]]; then
+            TECH_CONTEXT="Node.js with Express.js backend"
+          else
+            # Check file extension to determine React or utility
+            if [[ "$FILE_PATH" == *.jsx ]]; then
+              TECH_CONTEXT="React.js functional component with JSX and Tailwind CSS"
+            elif [[ "$FILE_PATH" == *.js ]]; then
+              TECH_CONTEXT="JavaScript ES6+ utility/helper functions"
+            else
+              TECH_CONTEXT="React.js with Tailwind CSS"
+            fi
+          fi
           
-          # Call Gemini API - using gemini-2.5-flash (stable version)
+          # Escape description for JSON
+          DESC_ESCAPED=$(echo "$DESC" | sed 's/"/\\"/g')
+          
+          # Call Gemini API with context-aware prompt
           RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "{\"contents\":[{\"parts\":[{\"text\":\"You are a code generator. Write ONLY code, no explanations, no markdown.\n\nTask: ${DESC_ESCAPED}\n\nOutput the complete working code without any markdown formatting or explanations.\"}]}]}")
+            -d "{\"contents\":[{\"parts\":[{\"text\":\"You are an expert ${TECH_CONTEXT} developer. Write production-ready code for the following task. Output ONLY the code, no explanations, no markdown blocks, no comments about the code.\n\nTask: ${DESC_ESCAPED}\n\nIMPORTANT:\n- For React components: Use functional components with hooks (useState, useEffect, etc.)\n- Use modern ES6+ syntax\n- For .jsx files: Write valid JSX (not HTML)\n- Use Tailwind CSS classes for styling (not inline styles or CSS)\n- Include proper imports at the top\n- Export the component/function properly\n\nOutput the complete working code:\"}]}]}")
           
           echo "API Response (first 500 chars):"
           echo "$RESPONSE" | head -c 500
