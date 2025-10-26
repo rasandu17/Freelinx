@@ -226,8 +226,8 @@ jobs:
           # Escape description for JSON
           DESC_ESCAPED=$(echo "$DESC" | sed 's/"/\\"/g' | sed 's/$/\\n/' | tr -d '\n')
           
-          # Call Gemini API with correct model name
-          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+          # Call Gemini API with correct model name (v1 API)
+          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "{\"contents\":[{\"parts\":[{\"text\":\"You are a code generator. Write ONLY code, no explanations, no markdown.\n\nTask: ${DESC_ESCAPED}\n\nOutput the complete working code without any markdown formatting or explanations.\"}]}]}")
           
