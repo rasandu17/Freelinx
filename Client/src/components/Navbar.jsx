@@ -1,88 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Responsive Navbar</title>
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body>
+import React, { useState } from 'react';
 
-<nav class="bg-gray-800 p-4 text-white relative">
-<div class="container mx-auto flex justify-between items-center">
-<!-- Logo -->
-<a href="#" class="text-2xl font-bold text-purple-400">YourLogo</a>
+function Navbar() {
+const [isOpen, setIsOpen] = useState(false);
 
-<!-- Navigation Links (Desktop) -->
-<div class="hidden md:flex space-x-4">
-<a href="#" class="hover:text-purple-400">Dashboard</a>
-<a href="#" class="hover:text-purple-400">Clients</a>
-<a href="#" class="hover:text-purple-400">Projects</a>
-<a href="#" class="hover:text-purple-400">Invoices</a>
+return (
+<nav className="bg-gray-800 p-4 sticky top-0 z-50 shadow-lg">
+<div className="container mx-auto flex justify-between items-center">
+{/* Logo Area */}
+<div className="text-white text-2xl font-bold tracking-wide">
+MyLogo
 </div>
 
-<!-- Mobile Menu Button -->
-<button id="mobile-menu-button" class="md:hidden focus:outline-none">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-</svg>
+{/* Desktop Navigation */}
+<div className="hidden md:flex items-center space-x-6">
+<a href="/dashboard" className="text-gray-300 hover:text-white transition-colors duration-200 text-lg font-medium">Dashboard</a>
+<a href="/clients" className="text-gray-300 hover:text-white transition-colors duration-200 text-lg font-medium">Clients</a>
+<a href="/projects" className="text-gray-300 hover:text-white transition-colors duration-200 text-lg font-medium">Projects</a>
+<a href="/invoices" className="text-gray-300 hover:text-white transition-colors duration-200 text-lg font-medium">Invoices</a>
+
+{/* Profile Icon */}
+<div className="ml-4 w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold text-lg cursor-pointer hover:bg-gray-500 transition-colors duration-200">
+P
+</div>
+</div>
+
+{/* Mobile menu button */}
+<div className="md:hidden flex items-center">
+<button onClick={() => setIsOpen(!isOpen)} className="text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-600 rounded p-1 transition-colors duration-200">
+{isOpen ? (
+<svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+) : (
+<svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+)}
 </button>
-
-<!-- Profile Icon (Desktop) -->
-<div class="hidden md:block">
-<a href="#" class="hover:text-purple-400">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-</svg>
-</a>
 </div>
 </div>
 
-<!-- Mobile Menu (Hidden by default) -->
-<div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 right-0 bg-gray-700 p-4 flex flex-col space-y-2 z-10">
-<a href="#" class="block px-4 py-2 hover:bg-gray-600 rounded">Dashboard</a>
-<a href="#" class="block px-4 py-2 hover:bg-gray-600 rounded">Clients</a>
-<a href="#" class="block px-4 py-2 hover:bg-gray-600 rounded">Projects</a>
-<a href="#" class="block px-4 py-2 hover:bg-gray-600 rounded">Invoices</a>
-<!-- Profile link in mobile menu -->
-<a href="#" class="block px-4 py-2 hover:bg-gray-600 rounded">
-<div class="flex items-center">
-<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-</svg>
-Profile
+{/* Mobile Menu */}
+{isOpen && (
+<div className="md:hidden mt-3 bg-gray-700 rounded-lg p-4 space-y-2 flex flex-col items-center">
+<a href="/dashboard" className="block text-gray-300 hover:text-white transition-colors duration-200 py-2 px-3 rounded w-full text-center text-lg font-medium">Dashboard</a>
+<a href="/clients" className="block text-gray-300 hover:text-white transition-colors duration-200 py-2 px-3 rounded w-full text-center text-lg font-medium">Clients</a>
+<a href="/projects" className="block text-gray-300 hover:text-white transition-colors duration-200 py-2 px-3 rounded w-full text-center text-lg font-medium">Projects</a>
+<a href="/invoices" className="block text-gray-300 hover:text-white transition-colors duration-200 py-2 px-3 rounded w-full text-center text-lg font-medium">Invoices</a>
+
+{/* Profile Icon in mobile */}
+<div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold text-lg cursor-pointer hover:bg-gray-500 transition-colors duration-200 mt-4">
+P
 </div>
-</a>
 </div>
+)}
 </nav>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-const mobileMenuButton = document.getElementById('mobile-menu-button');
-const mobileMenu = document.getElementById('mobile-menu');
-
-mobileMenuButton.addEventListener('click', (event) => {
-event.stopPropagation(); // Prevent document click listener from firing immediately
-mobileMenu.classList.toggle('hidden');
-});
-
-// Close mobile menu when a link is clicked
-mobileMenu.querySelectorAll('a').forEach(link => {
-link.addEventListener('click', () => {
-if (!mobileMenu.classList.contains('hidden')) {
-mobileMenu.classList.add('hidden');
+);
 }
-});
-});
 
-// Close mobile menu when clicking outside
-document.addEventListener('click', (event) => {
-if (!mobileMenu.classList.contains('hidden') && !mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
-mobileMenu.classList.add('hidden');
-}
-});
-});
-</script>
-
-</body>
-</html>
+export default Navbar;
