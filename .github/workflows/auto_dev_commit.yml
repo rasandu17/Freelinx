@@ -42,7 +42,7 @@ jobs:
             git config user.name "rasandu17"
             git config user.email "rasandu17@gmail.com"
             
-            # Commit and push the progress file
+            # Commit and push the progress file (only once during initialization)
             git add $PROGRESS_FILE
             git commit -m "Initialize progress tracker"
             git push origin main
@@ -51,7 +51,22 @@ jobs:
           else
             echo "✅ Progress tracker already exists"
           fi
-
+          
+          # Initialize quota file if it doesn't exist
+          QUOTA_FILE=".monthly_commit_quota.json"
+          if [ ! -f "$QUOTA_FILE" ]; then
+            echo '{}' > $QUOTA_FILE
+            git add $QUOTA_FILE
+            git commit -m "Initialize quota tracker"
+            git push origin main
+          fi
+          
+          # Tell git to ignore changes to these files from now on
+          git update-index --assume-unchanged .progress.json
+          git update-index --assume-unchanged .monthly_commit_quota.json
+          
+          echo "🔒 Tracking files are now ignored by git"
+          
       - name: Select instruction file (frontend first, then backend)
         id: pickfile
         run: |
@@ -90,7 +105,6 @@ jobs:
           
           echo "SELECTED_FILE=$SELECTED_FILE" >> $GITHUB_ENV
           echo "Selected file: $SELECTED_FILE"
-
       - name: Read instructions
         id: read
         run: |
@@ -106,7 +120,6 @@ jobs:
           
           echo "INSTRUCTIONS_B64=$(echo "$INSTRUCTIONS" | base64 -w 0)" >> $GITHUB_ENV
           echo "Instructions extracted successfully"
-
       - name: Setup daily quota
         run: |
           TODAY=$(date +%Y-%m-%d)
@@ -131,7 +144,6 @@ jobs:
           echo "DONE=$DONE" >> $GITHUB_ENV
           echo "TODAY=$TODAY" >> $GITHUB_ENV
           echo "Today: $TODAY | Done: $DONE | Quota: $QUOTA"
-
       - name: Track progress and select next instruction (SEQUENTIAL)
         id: progress
         run: |
@@ -176,7 +188,6 @@ jobs:
           echo "SELECTED_INDEX=$SELECTED_INDEX" >> $GITHUB_ENV
           echo "COMPLETED_KEY=$COMPLETED_KEY" >> $GITHUB_ENV
           echo "📍 Selected instruction #$SELECTED_INDEX ($REMAINING remaining in order)"
-
       - name: Decide whether to commit this run
         id: randomcommit
         run: |
@@ -193,7 +204,6 @@ jobs:
               echo "Random check failed - skipping commit (instruction #$SELECTED_INDEX will be tried again next time)"
             fi
           fi
-
       - name: Run commit if selected
         if: env.DO_COMMIT == 'true'
         env:
@@ -290,8 +300,12 @@ jobs:
           # Update commits_done counter
           jq ".\"$TODAY\".commits_done += 1" .monthly_commit_quota.json > tmp_quota.$$.json && mv tmp_quota.$$.json .monthly_commit_quota.json
           
-          # Add the generated code, progress tracker, and quota file in one commit
-          git add "$FILE_PATH" .progress.json .monthly_commit_quota.json
+          # Re-apply assume-unchanged to ensure tracking files remain ignored
+          git update-index --assume-unchanged .progress.json 2>/dev/null || true
+          git update-index --assume-unchanged .monthly_commit_quota.json 2>/dev/null || true
+          
+          # ONLY commit the actual code file - tracking files are ignored
+          git add "$FILE_PATH"
           
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -301,4 +315,4 @@ jobs:
           git commit -m "$TITLE" -m "$DESC"
           git push origin main
           
-          echo "✅ Successfully pushed changes"
+          echo "✅ Successfully pushed code changes only"
