@@ -1,75 +1,61 @@
 import React from 'react';
 import {
-LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-BarChart, Bar, PieChart, Pie, Cell
+LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 
+// Mock Data
 const incomeData = [
-{ month: 'Jan', income: 4000, expenses: 2400 },
-{ month: 'Feb', income: 3000, expenses: 1398 },
-{ month: 'Mar', income: 5000, expenses: 3200 },
-{ month: 'Apr', income: 4500, expenses: 2800 },
-{ month: 'May', income: 6000, expenses: 4000 },
-{ month: 'Jun', income: 5500, expenses: 3500 },
-{ month: 'Jul', income: 4800, expenses: 3000 },
-{ month: 'Aug', income: 5200, expenses: 3300 },
-{ month: 'Sep', income: 5800, expenses: 3700 },
-{ month: 'Oct', income: 6500, expenses: 4200 },
-{ month: 'Nov', income: 6200, expenses: 3900 },
-{ month: 'Dec', income: 7000, expenses: 4500 },
+{ name: 'Jan', income: 4000, expenses: 2400 },
+{ name: 'Feb', income: 3000, expenses: 1398 },
+{ name: 'Mar', income: 5000, expenses: 3200 },
+{ name: 'Apr', income: 4500, expenses: 2800 },
+{ name: 'May', income: 6000, expenses: 4000 },
+{ name: 'Jun', income: 5500, expenses: 3500 },
 ];
 
 const projectStatusData = [
-{ name: 'New', value: 25 },
-{ name: 'In Progress', value: 45 },
-{ name: 'Completed', value: 70 },
-{ name: 'On Hold', value: 10 },
-{ name: 'Cancelled', value: 5 },
+{ name: 'Completed', value: 15 },
+{ name: 'In Progress', value: 8 },
+{ name: 'On Hold', value: 3 },
+{ name: 'Pending', value: 2 },
 ];
-
-const projectStatusColors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#E74C3C'];
 
 const clientActivityData = [
-{ week: 'Wk 1', emails: 30, calls: 15, meetings: 5 },
-{ week: 'Wk 2', emails: 25, calls: 10, meetings: 3 },
-{ week: 'Wk 3', emails: 35, calls: 20, meetings: 7 },
-{ week: 'Wk 4', emails: 20, calls: 12, meetings: 4 },
-{ week: 'Wk 5', emails: 28, calls: 18, meetings: 6 },
-{ week: 'Wk 6', emails: 32, calls: 14, meetings: 5 },
+{ name: 'Client A', projects: 12, value: 40000 },
+{ name: 'Client B', projects: 8, value: 30000 },
+{ name: 'Client C', projects: 5, value: 20000 },
+{ name: 'Client D', projects: 3, value: 15000 },
 ];
+
+const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 function ReportsPage() {
 return (
 <div className="p-6 bg-gray-100 min-h-screen">
-<h1 className="text-4xl font-extrabold text-gray-800 mb-8 text-center">Analytics Reports Overview</h1>
+<h1 className="text-3xl font-bold text-gray-800 mb-8">Reports Overview</h1>
 
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-{/* Monthly Income Overview Chart */}
-<div className="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300">
-<h2 className="text-2xl font-semibold text-gray-700 mb-5">Monthly Income & Expenses</h2>
+{/* Monthly Income Chart */}
+<div className="bg-white p-6 rounded-lg shadow-md">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income & Expenses</h2>
 <ResponsiveContainer width="100%" height={300}>
 <LineChart data={incomeData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm text-gray-600" />
-<YAxis className="text-sm text-gray-600" />
-<Tooltip
-contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ddd', borderRadius: '8px', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-labelStyle={{ fontWeight: 'bold', marginBottom: '6px', color: '#333' }}
-itemStyle={{ fontSize: '14px', marginBottom: '3px', color: '#555' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '15px', fontSize: '14px' }} />
-<Line type="monotone" dataKey="income" stroke="#4F46E5" activeDot={{ r: 8 }} strokeWidth={2} name="Income" />
-<Line type="monotone" dataKey="expenses" stroke="#10B981" strokeWidth={2} name="Expenses" />
+<CartesianGrid strokeDasharray="3 3" />
+<XAxis dataKey="name" />
+<YAxis />
+<Tooltip />
+<Legend />
+<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
 </LineChart>
 </ResponsiveContainer>
 </div>
 
-{/* Project Status Distribution Chart */}
-<div className="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300">
-<h2 className="text-2xl font-semibold text-gray-700 mb-5">Project Status Distribution</h2>
+{/* Project Status Pie Chart */}
+<div className="bg-white p-6 rounded-lg shadow-md">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Project Status Distribution</h2>
 <ResponsiveContainer width="100%" height={300}>
-<PieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+<PieChart>
 <Pie
 data={projectStatusData}
 cx="50%"
@@ -78,47 +64,33 @@ labelLine={false}
 outerRadius={100}
 fill="#8884d8"
 dataKey="value"
+nameKey="name"
 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-animationDuration={800}
-animationEasing="ease-out"
 >
-{
-projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={projectStatusColors[index % projectStatusColors.length]} />
-))
-}
+{projectStatusData.map((entry, index) => (
+<Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+))}
 </Pie>
-<Tooltip
-contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ddd', borderRadius: '8px', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-labelStyle={{ fontWeight: 'bold', marginBottom: '6px', color: '#333' }}
-itemStyle={{ fontSize: '14px', marginBottom: '3px', color: '#555' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '15px', fontSize: '14px' }} />
+<Tooltip />
+<Legend />
 </PieChart>
 </ResponsiveContainer>
 </div>
 
-{/* Weekly Client Activity Chart */}
-<div className="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300">
-<h2 className="text-2xl font-semibold text-gray-700 mb-5">Weekly Client Activity</h2>
+{/* Client Activity Bar Chart */}
+<div className="bg-white p-6 rounded-lg shadow-md">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Client Activity (Projects)</h2>
 <ResponsiveContainer width="100%" height={300}>
 <BarChart data={clientActivityData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="week" className="text-sm text-gray-600" />
-<YAxis className="text-sm text-gray-600" />
-<Tooltip
-contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ddd', borderRadius: '8px', padding: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-labelStyle={{ fontWeight: 'bold', marginBottom: '6px', color: '#333' }}
-itemStyle={{ fontSize: '14px', marginBottom: '3px', color: '#555' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '15px', fontSize: '14px' }} />
-<Bar dataKey="emails" fill="#3B82F6" name="Emails Sent" />
-<Bar dataKey="calls" fill="#F59E0B" name="Calls Made" />
-<Bar dataKey="meetings" fill="#EF4444" name="Meetings" />
+<CartesianGrid strokeDasharray="3 3" />
+<XAxis dataKey="name" />
+<YAxis />
+<Tooltip />
+<Legend />
+<Bar dataKey="projects" fill="#82ca9d" />
 </BarChart>
 </ResponsiveContainer>
 </div>
-
 </div>
 </div>
 );
