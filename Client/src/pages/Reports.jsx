@@ -1,135 +1,121 @@
 import React from 'react';
 import {
-LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-PieChart, Pie, BarChart, Bar, Cell
+LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
 
-const incomeData = [
-{ month: 'Jan', income: 4000 },
-{ month: 'Feb', income: 3000 },
-{ month: 'Mar', income: 5000 },
-{ month: 'Apr', income: 4500 },
-{ month: 'May', income: 6000 },
-{ month: 'Jun', income: 5500 },
-{ month: 'Jul', income: 7000 },
-{ month: 'Aug', income: 6500 },
-{ month: 'Sep', income: 8000 },
-{ month: 'Oct', income: 7500 },
-{ month: 'Nov', income: 9000 },
-{ month: 'Dec', income: 8500 },
-];
-
-const projectStatusData = [
-{ name: 'Completed', value: 12 },
-{ name: 'In Progress', value: 8 },
-{ name: 'Pending', value: 5 },
-{ name: 'On Hold', value: 3 },
-];
-
-const COLORS = ['#82ca9d', '#8884d8', '#ffc658', '#FF8042'];
-
-const clientActivityData = [
-{ client: 'Client A', projects: 10 },
-{ client: 'Client B', projects: 7 },
-{ client: 'Client C', projects: 5 },
-{ client: 'Client D', projects: 8 },
-{ client: 'Client E', projects: 6 },
-];
-
 const ReportsPage = () => {
-return (
-<div className="min-h-screen bg-gray-100 p-6">
-<h1 className="text-4xl font-extrabold text-gray-800 mb-8 text-center">Business Reports</h1>
+// Dummy data for monthly income over a year
+const incomeData = [
+{ month: 'January', income: 4200 },
+{ month: 'February', income: 3800 },
+{ month: 'March', income: 5100 },
+{ month: 'April', income: 4700 },
+{ month: 'May', income: 6300 },
+{ month: 'June', income: 5900 },
+{ month: 'July', income: 6800 },
+{ month: 'August', income: 7200 },
+{ month: 'September', income: 6500 },
+{ month: 'October', income: 7800 },
+{ month: 'November', income: 8300 },
+{ month: 'December', income: 7900 },
+];
 
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-{/* Income Chart */}
-<div className="bg-white rounded-lg shadow-xl p-6">
-<h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">Monthly Income Trend</h2>
-<div className="w-full h-80">
-<ResponsiveContainer width="100%" height="100%">
-<LineChart
-data={incomeData}
-margin={{
-top: 5,
-right: 30,
-left: 20,
-bottom: 5,
-}}
->
+// Dummy data for project status distribution
+const projectStatusData = [
+{ name: 'Completed', value: 120 },
+{ name: 'In Progress', value: 80 },
+{ name: 'Pending', value: 30 },
+{ name: 'On Hold', value: 15 },
+{ name: 'Cancelled', value: 5 },
+];
+
+// Dummy data for client activity overview
+const clientActivityData = [
+{ client: 'Client A', activityCount: 150 },
+{ client: 'Client B', activityCount: 120 },
+{ client: 'Client C', activityCount: 90 },
+{ client: 'Client D', activityCount: 70 },
+{ client: 'Client E', activityCount: 60 },
+{ client: 'Client F', activityCount: 40 },
+];
+
+// Custom colors for Pie Chart segments
+const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
+
+return (
+<div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 p-8 sm:p-10 md:p-12 font-sans">
+<h1 className="text-5xl font-extrabold text-gray-900 mb-12 text-center drop-shadow-lg">Business Reports Dashboard</h1>
+
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 xl:gap-10">
+
+{/* Monthly Income Trend Card */}
+<div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 ease-in-out border border-gray-100 transform hover:-translate-y-1">
+<h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Monthly Income Trend</h2>
+<ResponsiveContainer width="100%" height={300}>
+<LineChart data={incomeData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" tick={{ fill: '#555' }} />
-<YAxis tick={{ fill: '#555' }} />
-<Tooltip
-formatter={(value) => `$${value}`}
-contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ color: '#333' }}
+<XAxis dataKey="month" tickFormatter={(value) => value.substring(0, 3)} className="text-sm" axisLine={false} tickLine={false} />
+<YAxis unit="$" tickFormatter={(value) => (value / 1000) + 'k'} className="text-sm" axisLine={false} tickLine={false} />
+<Tooltip cursor={{ strokeDasharray: '3 3', stroke: '#cbd5e1' }} formatter={(value) => `$${value.toLocaleString()}`} />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Line
+type="monotone"
+dataKey="income"
+stroke="#6366f1" // Indigo-500
+activeDot={{ r: 8, fill: '#6366f1', stroke: '#a5b4fc', strokeWidth: 2 }}
+strokeWidth={3}
+dot={{ r: 4, fill: '#818cf8' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px', color: '#555' }} />
-<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
 </LineChart>
 </ResponsiveContainer>
 </div>
-</div>
 
-{/* Project Status Chart */}
-<div className="bg-white rounded-lg shadow-xl p-6">
-<h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">Project Status Overview</h2>
-<div className="w-full h-80 flex justify-center items-center">
-<ResponsiveContainer width="100%" height="100%">
+{/* Project Status Distribution Card */}
+<div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 ease-in-out border border-gray-100 transform hover:-translate-y-1">
+<h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Project Status Distribution</h2>
+<ResponsiveContainer width="100%" height={300}>
 <PieChart>
 <Pie
 data={projectStatusData}
 cx="50%"
 cy="50%"
 labelLine={false}
-outerRadius={100}
+outerRadius={120}
 fill="#8884d8"
 dataKey="value"
 nameKey="name"
+label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
 >
 {projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+<Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
 ))}
 </Pie>
-<Tooltip
-formatter={(value) => `${value} Projects`}
-contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ color: '#333' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '10px', color: '#555' }} />
+<Tooltip formatter={(value, name) => [`${value} projects`, name]} />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
 </PieChart>
 </ResponsiveContainer>
 </div>
-</div>
 
-{/* Client Activity Chart */}
-<div className="bg-white rounded-lg shadow-xl p-6">
-<h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">Client Activity by Projects</h2>
-<div className="w-full h-80">
-<ResponsiveContainer width="100%" height="100%">
-<BarChart
-data={clientActivityData}
-margin={{
-top: 5,
-right: 30,
-left: 20,
-bottom: 5,
-}}
->
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="client" tick={{ fill: '#555' }} />
-<YAxis tick={{ fill: '#555' }} />
-<Tooltip
-formatter={(value) => `${value} Projects`}
-contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ color: '#333' }}
+{/* Client Activity Overview Card */}
+<div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 ease-in-out border border-gray-100 transform hover:-translate-y-1">
+<h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Client Activity Overview</h2>
+<ResponsiveContainer width="100%" height={300}>
+<BarChart data={clientActivityData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical={false} />
+<XAxis dataKey="client" className="text-sm" axisLine={false} tickLine={false} />
+<YAxis className="text-sm" axisLine={false} tickLine={false} />
+<Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} formatter={(value, name) => [`${value} activities`, name]} />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Bar
+dataKey="activityCount"
+fill="#22d3ee" // Cyan-400
+barSize={30}
+radius={[8, 8, 0, 0]}
 />
-<Legend wrapperStyle={{ paddingTop: '10px', color: '#555' }} />
-<Bar dataKey="projects" fill="#82ca9d" barSize={30} />
 </BarChart>
 </ResponsiveContainer>
 </div>
-</div>
+
 </div>
 </div>
 );
