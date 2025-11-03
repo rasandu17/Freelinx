@@ -36,16 +36,16 @@
     "commits_today_quota": 0
   },
   "2025-11-03": {
-    "commits_done": 3,
-    "commits_today_quota": 0
+    "commits_done": 0,
+    "commits_today_quota": 3
   },
   "2025-11-04": {
     "commits_done": 0,
-    "commits_today_quota": 5
+    "commits_today_quota": 0
   },
   "2025-11-05": {
     "commits_done": 0,
-    "commits_today_quota": 13
+    "commits_today_quota": 1
   },
   "2025-11-06": {
     "commits_done": 0,
