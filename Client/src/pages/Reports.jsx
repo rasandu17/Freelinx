@@ -1,98 +1,85 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-BarChart, Bar, PieChart, Pie, Cell
+ResponsiveContainer,
+LineChart,
+Line,
+PieChart,
+Pie,
+BarChart,
+Bar,
+AreaChart,
+Area,
+XAxis,
+YAxis,
+CartesianGrid,
+Tooltip,
+Legend,
+Cell,
 } from 'recharts';
 
+const ReportsPage = () => {
 const incomeData = [
-{ month: 'Jan', income: 4000 },
-{ month: 'Feb', income: 3000 },
-{ month: 'Mar', income: 5000 },
-{ month: 'Apr', income: 4500 },
-{ month: 'May', income: 6000 },
-{ month: 'Jun', income: 5500 },
-{ month: 'Jul', income: 7000 },
-{ month: 'Aug', income: 6500 },
-{ month: 'Sep', income: 8000 },
-{ month: 'Oct', income: 7500 },
-{ month: 'Nov', income: 9000 },
-{ month: 'Dec', income: 8500 },
+{ name: 'Jan', income: 4000, expenses: 2400 },
+{ name: 'Feb', income: 3000, expenses: 1398 },
+{ name: 'Mar', income: 5000, expenses: 2210 },
+{ name: 'Apr', income: 4780, expenses: 2000 },
+{ name: 'May', income: 5890, expenses: 2181 },
+{ name: 'Jun', income: 6000, expenses: 2500 },
+{ name: 'Jul', income: 5200, expenses: 3200 },
 ];
 
 const projectStatusData = [
-{ status: 'Pending', count: 12 },
-{ status: 'In Progress', count: 25 },
-{ status: 'Completed', count: 48 },
-{ status: 'On Hold', count: 5 },
+{ name: 'Completed', value: 15 },
+{ name: 'In Progress', value: 10 },
+{ name: 'Pending', value: 7 },
+{ name: 'On Hold', value: 3 },
 ];
+const PIE_COLORS = ['#00C49F', '#FFBB28', '#FF8042', '#0088FE'];
 
 const clientActivityData = [
-{ name: 'New Clients', value: 300 },
-{ name: 'Active Clients', value: 700 },
-{ name: 'Inactive Clients', value: 200 },
+{ client: 'Client A', projects: 12, meetings: 25 },
+{ client: 'Client B', projects: 8, meetings: 18 },
+{ client: 'Client C', projects: 5, meetings: 10 },
+{ client: 'Client D', projects: 3, meetings: 7 },
+{ client: 'Client E', projects: 2, meetings: 5 },
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3'];
-
-const ReportsPage = () => {
 return (
-<div className="min-h-screen bg-gray-100 p-8">
-<h1 className="text-4xl font-bold text-gray-800 mb-8">Reports Overview</h1>
+<div className="container mx-auto p-6 bg-gray-100 min-h-screen">
+<h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Business Reports</h1>
 
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-{/* Income Chart */}
-<div className="bg-white rounded-lg shadow-md p-6">
-<h2 className="text-2xl font-semibold text-gray-700 mb-4">Monthly Income</h2>
+<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+{/* Income Report */}
+<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income & Expenses</h2>
 <ResponsiveContainer width="100%" height={300}>
-<LineChart
-data={incomeData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
+<AreaChart data={incomeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm" />
+<XAxis dataKey="name" className="text-sm" />
 <YAxis className="text-sm" />
 <Tooltip
-contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold' }}
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+fontSize: '14px',
+}}
 />
 <Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-</LineChart>
+<Area type="monotone" dataKey="income" stackId="1" stroke="#8884d8" fill="#8884d8" name="Income" />
+<Area type="monotone" dataKey="expenses" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Expenses" />
+</AreaChart>
 </ResponsiveContainer>
 </div>
 
-{/* Project Status Chart */}
-<div className="bg-white rounded-lg shadow-md p-6">
-<h2 className="text-2xl font-semibold text-gray-700 mb-4">Project Status</h2>
+{/* Project Status Report */}
+<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Project Status Overview</h2>
 <ResponsiveContainer width="100%" height={300}>
-<BarChart
-data={projectStatusData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="status" className="text-sm" />
-<YAxis className="text-sm" />
-<Tooltip
-contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar dataKey="count" fill="#82ca9d" barSize={30}>
-{projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-))}
-</Bar>
-</BarChart>
-</ResponsiveContainer>
-</div>
-
-{/* Client Activity Chart */}
-<div className="bg-white rounded-lg shadow-md p-6">
-<h2 className="text-2xl font-semibold text-gray-700 mb-4">Client Activity</h2>
-<ResponsiveContainer width="100%" height={300}>
-<PieChart>
+<PieChart margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
 <Pie
-data={clientActivityData}
+data={projectStatusData}
 cx="50%"
 cy="50%"
 labelLine={false}
@@ -102,16 +89,77 @@ dataKey="value"
 nameKey="name"
 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
 >
-{clientActivityData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+{projectStatusData.map((entry, index) => (
+<Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
 ))}
 </Pie>
 <Tooltip
-contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold' }}
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+fontSize: '14px',
+}}
 />
 <Legend wrapperStyle={{ paddingTop: '10px' }} />
 </PieChart>
+</ResponsiveContainer>
+</div>
+
+{/* Client Activity Report */}
+<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Client Activity & Engagement</h2>
+<ResponsiveContainer width="100%" height={300}>
+<BarChart data={clientActivityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+<XAxis dataKey="client" className="text-sm" />
+<YAxis className="text-sm" />
+<Tooltip
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+fontSize: '14px',
+}}
+/>
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Bar dataKey="projects" fill="#82ca9d" name="Projects" />
+<Bar dataKey="meetings" fill="#8884d8" name="Meetings" />
+</BarChart>
+</ResponsiveContainer>
+</div>
+
+{/* Additional Chart Example: Quarterly Performance */}
+<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Quarterly Performance</h2>
+<ResponsiveContainer width="100%" height={300}>
+<LineChart
+data={[
+{ quarter: 'Q1', sales: 12000, profit: 5000 },
+{ quarter: 'Q2', sales: 15000, profit: 7000 },
+{ quarter: 'Q3', sales: 11000, profit: 4500 },
+{ quarter: 'Q4', sales: 18000, profit: 9000 },
+]}
+margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+>
+<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+<XAxis dataKey="quarter" className="text-sm" />
+<YAxis className="text-sm" />
+<Tooltip
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+fontSize: '14px',
+}}
+/>
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Line type="monotone" dataKey="sales" stroke="#ffc658" activeDot={{ r: 8 }} name="Sales" />
+<Line type="monotone" dataKey="profit" stroke="#a4de6c" activeDot={{ r: 8 }} name="Profit" />
+</LineChart>
 </ResponsiveContainer>
 </div>
 </div>
