@@ -1,128 +1,168 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 ResponsiveContainer,
 BarChart,
 Bar,
 XAxis,
 YAxis,
-CartesianGrid,
 Tooltip,
 Legend,
-LineChart,
-Line,
 PieChart,
 Pie,
-Cell
+Cell,
 } from 'recharts';
 
-const incomeData = [
-{ month: 'Jan', income: 4000, expenses: 2400 },
-{ month: 'Feb', income: 3000, expenses: 1398 },
-{ month: 'Mar', income: 5000, expenses: 3200 },
-{ month: 'Apr', income: 4500, expenses: 3908 },
-{ month: 'May', income: 6000, expenses: 4800 },
-{ month: 'Jun', income: 5500, expenses: 3800 },
-{ month: 'Jul', income: 6200, expenses: 4300 },
-{ month: 'Aug', income: 5800, expenses: 3900 },
-{ month: 'Sep', income: 6500, expenses: 4500 },
-{ month: 'Oct', income: 7000, expenses: 5000 },
-{ month: 'Nov', income: 6800, expenses: 4700 },
-{ month: 'Dec', income: 7500, expenses: 5200 },
-];
-
-const projectStatusData = [
-{ name: 'Completed', value: 15 },
-{ name: 'In Progress', value: 20 },
-{ name: 'Pending', value: 10 },
-{ name: 'On Hold', value: 5 },
-];
-const PROJECT_STATUS_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-const clientActivityData = [
-{ client: 'Alpha Corp', projects: 12, value: 50000 },
-{ client: 'Beta Ltd', projects: 8, value: 30000 },
-{ client: 'Gamma Inc', projects: 5, value: 20000 },
-{ client: 'Delta LLC', projects: 7, value: 25000 },
-{ client: 'Epsilon Co', projects: 9, value: 35000 },
-];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6666'];
 
 const ReportsPage = () => {
-return (
-<div className="min-h-screen bg-gray-100 p-8">
-<h1 className="text-4xl font-extrabold text-gray-900 mb-10 text-center">Business Reports Overview</h1>
+const [incomeData, setIncomeData] = useState([]);
+const [projectStatusData, setProjectStatusData] = useState([]);
+const [clientActivityData, setClientActivityData] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
 
-<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-{/* Income & Expenses Chart */}
-<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
-<h2 className="text-2xl font-semibold text-gray-800 mb-4">Monthly Income & Expenses</h2>
+useEffect(() => {
+const fetchReportsData = async () => {
+try {
+// Simulate API call delay
+await new Promise((resolve) => setTimeout(resolve, 800));
+
+const dummyIncomeData = [
+{ name: 'Jan', income: 4000 },
+{ name: 'Feb', income: 3000 },
+{ name: 'Mar', income: 5000 },
+{ name: 'Apr', income: 4500 },
+{ name: 'May', income: 6000 },
+{ name: 'Jun', income: 5500 },
+{ name: 'Jul', income: 7000 },
+{ name: 'Aug', income: 6500 },
+{ name: 'Sep', income: 8000 },
+{ name: 'Oct', income: 7500 },
+{ name: 'Nov', income: 9000 },
+{ name: 'Dec', income: 8500 },
+];
+
+const dummyProjectStatusData = [
+{ name: 'Pending', count: 8 },
+{ name: 'In Progress', count: 15 },
+{ name: 'Completed', count: 30 },
+{ name: 'On Hold', count: 5 },
+];
+
+const dummyClientActivityData = [
+{ name: 'Active', value: 120 },
+{ name: 'New', value: 45 },
+{ name: 'Inactive', value: 30 },
+{ name: 'Churned', value: 15 },
+];
+
+setIncomeData(dummyIncomeData);
+setProjectStatusData(dummyProjectStatusData);
+setClientActivityData(dummyClientActivityData);
+} catch (err) {
+setError('Failed to fetch report data.');
+console.error('Error fetching reports:', err);
+} finally {
+setLoading(false);
+}
+};
+
+fetchReportsData();
+}, []);
+
+if (loading) {
+return (
+<div className="flex items-center justify-center min-h-screen bg-gray-100">
+<div className="text-xl font-semibold text-gray-700">Loading reports...</div>
+</div>
+);
+}
+
+if (error) {
+return (
+<div className="flex items-center justify-center min-h-screen bg-gray-100">
+<div className="text-xl font-semibold text-red-600">{error}</div>
+</div>
+);
+}
+
+return (
+<div className="container mx-auto p-6 bg-gray-100 min-h-screen">
+<h1 className="text-3xl font-bold mb-8 text-gray-800">Reports Dashboard</h1>
+
+<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+{/* Income Chart */}
+<div className="bg-white rounded-lg shadow-md p-6">
+<h2 className="text-xl font-semibold mb-4 text-gray-700">Monthly Income</h2>
 <ResponsiveContainer width="100%" height={300}>
-<LineChart
-data={incomeData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm" />
+<BarChart data={incomeData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+<XAxis dataKey="name" className="text-sm" />
 <YAxis className="text-sm" />
 <Tooltip
-contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold' }}
-itemStyle={{ color: '#333333' }}
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+}}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Line type="monotone" dataKey="income" stroke="#82ca9d" activeDot={{ r: 8 }} strokeWidth={2} />
-<Line type="monotone" dataKey="expenses" stroke="#FF6B6B" strokeWidth={2} />
-</LineChart>
+<Legend />
+<Bar dataKey="income" fill="#8884d8" name="Income" />
+</BarChart>
 </ResponsiveContainer>
 </div>
 
 {/* Project Status Chart */}
-<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
-<h2 className="text-2xl font-semibold text-gray-800 mb-4">Project Status Distribution</h2>
+<div className="bg-white rounded-lg shadow-md p-6">
+<h2 className="text-xl font-semibold mb-4 text-gray-700">Project Status Overview</h2>
+<ResponsiveContainer width="100%" height={300}>
+<BarChart data={projectStatusData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+<XAxis dataKey="name" className="text-sm" />
+<YAxis className="text-sm" />
+<Tooltip
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+}}
+/>
+<Legend />
+<Bar dataKey="count" fill="#82ca9d" name="Number of Projects" />
+</BarChart>
+</ResponsiveContainer>
+</div>
+
+{/* Client Activity Chart */}
+<div className="bg-white rounded-lg shadow-md p-6">
+<h2 className="text-xl font-semibold mb-4 text-gray-700">Client Activity Breakdown</h2>
 <ResponsiveContainer width="100%" height={300}>
 <PieChart>
 <Pie
-data={projectStatusData}
+data={clientActivityData}
 cx="50%"
 cy="50%"
 labelLine={false}
 outerRadius={100}
 fill="#8884d8"
 dataKey="value"
-label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+nameKey="name"
 >
-{projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={PROJECT_STATUS_COLORS[index % PROJECT_STATUS_COLORS.length]} />
+{clientActivityData.map((entry, index) => (
+<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
 ))}
 </Pie>
 <Tooltip
-contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold' }}
-itemStyle={{ color: '#333333' }}
+contentStyle={{
+backgroundColor: '#fff',
+border: '1px solid #ccc',
+borderRadius: '4px',
+padding: '8px',
+}}
+formatter={(value, name, props) => [`${value} clients`, props.payload.name]}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Legend />
 </PieChart>
-</ResponsiveContainer>
-</div>
-
-{/* Client Activity Chart */}
-<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
-<h2 className="text-2xl font-semibold text-gray-800 mb-4">Client Projects Overview</h2>
-<ResponsiveContainer width="100%" height={300}>
-<BarChart
-data={clientActivityData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="client" className="text-sm" angle={-15} textAnchor="end" height={50} />
-<YAxis />
-<Tooltip
-contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e0e0e0', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold' }}
-itemStyle={{ color: '#333333' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar dataKey="projects" fill="#8884d8" name="Number of Projects" barSize={30} />
-</BarChart>
 </ResponsiveContainer>
 </div>
 </div>
