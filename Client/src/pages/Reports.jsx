@@ -1,104 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
-ResponsiveContainer,
-BarChart,
-Bar,
-XAxis,
-YAxis,
-CartesianGrid,
-Tooltip,
-Legend,
-PieChart,
-Pie,
-Cell,
-LineChart,
-Line,
+LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+BarChart, Bar,
+PieChart, Pie, Cell
 } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC72C'];
-
 const ReportsPage = () => {
-const [incomeData, setIncomeData] = useState([]);
-const [projectStatusData, setProjectStatusData] = useState([]);
-const [clientActivityData, setClientActivityData] = useState([]);
+// Mock data for Income Chart
+const incomeData = [
+{ name: 'Jan', income: 4000, expenses: 2400 },
+{ name: 'Feb', income: 3000, expenses: 1398 },
+{ name: 'Mar', income: 2000, expenses: 9800 },
+{ name: 'Apr', income: 2780, expenses: 3908 },
+{ name: 'May', income: 1890, expenses: 4800 },
+{ name: 'Jun', income: 2390, expenses: 3800 },
+{ name: 'Jul', income: 3490, expenses: 4300 },
+];
 
-useEffect(() => {
-const fetchReportsData = async () => {
-await new Promise(resolve => setTimeout(resolve, 500)); 
-
-setIncomeData([
-{ month: 'Jan', income: 4000 },
-{ month: 'Feb', income: 3000 },
-{ month: 'Mar', income: 5000 },
-{ month: 'Apr', income: 4500 },
-{ month: 'May', income: 6000 },
-{ month: 'Jun', income: 5500 },
-{ month: 'Jul', income: 6500 },
-{ month: 'Aug', income: 7000 },
-{ month: 'Sep', income: 6200 },
-{ month: 'Oct', income: 7500 },
-{ month: 'Nov', income: 8000 },
-{ month: 'Dec', income: 9000 },
-]);
-
-setProjectStatusData([
+// Mock data for Project Status Chart
+const projectStatusData = [
 { name: 'Completed', value: 12 },
 { name: 'In Progress', value: 8 },
-{ name: 'Pending', value: 3 },
+{ name: 'Pending', value: 5 },
 { name: 'On Hold', value: 2 },
-{ name: 'Cancelled', value: 1 },
-]);
+];
+const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-setClientActivityData([
-{ client: 'Client A', projects: 5 },
-{ client: 'Client B', projects: 3 },
-{ client: 'Client C', projects: 7 },
-{ client: 'Client D', projects: 2 },
-{ client: 'Client E', projects: 4 },
-{ client: 'Client F', projects: 6 },
-]);
-};
-
-fetchReportsData();
-}, []);
+// Mock data for Client Activity Chart
+const clientActivityData = [
+{ name: 'Client A', projects: 10, supportTickets: 5 },
+{ name: 'Client B', projects: 7, supportTickets: 3 },
+{ name: 'Client C', projects: 5, supportTickets: 2 },
+{ name: 'Client D', projects: 3, supportTickets: 1 },
+{ name: 'Client E', projects: 2, supportTickets: 0 },
+];
 
 return (
-<div className="p-6 bg-gray-50 min-h-screen text-gray-900">
-<h1 className="text-4xl font-extrabold text-gray-800 mb-8 pb-4 border-b border-gray-200">Business Reports Dashboard</h1>
+<div className="min-h-screen bg-gray-100 p-8">
+<h1 className="text-3xl font-bold text-gray-800 mb-8">Reports Overview</h1>
 
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-<div className="bg-white rounded-xl shadow-lg p-7">
-<h2 className="text-2xl font-bold text-gray-800 mb-5">Monthly Income Trend</h2>
+{/* Income Chart */}
+<div className="bg-white shadow-lg rounded-lg p-6 mb-8">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income & Expenses</h2>
 <ResponsiveContainer width="100%" height={300}>
 <LineChart
 data={incomeData}
-margin={{ top: 15, right: 30, left: 20, bottom: 15 }}
+margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 >
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm" />
+<CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
+<XAxis dataKey="name" className="text-sm" />
 <YAxis className="text-sm" />
-<Tooltip
-wrapperClassName="rounded-lg shadow-lg bg-white p-2"
-labelClassName="font-bold text-gray-800"
-itemStyle={{ color: '#333' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '20px' }} />
-<Line
-type="monotone"
-dataKey="income"
-stroke="#8884d8"
-activeDot={{ r: 8 }}
-strokeWidth={2}
-name="Income ($)"
-/>
+<Tooltip wrapperClassName="rounded-md shadow-md" labelClassName="font-semibold" />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
 </LineChart>
 </ResponsiveContainer>
 </div>
 
-<div className="bg-white rounded-xl shadow-lg p-7 flex flex-col justify-between">
-<div>
-<h2 className="text-2xl font-bold text-gray-800 mb-5">Project Status Distribution</h2>
+{/* Project Status Chart */}
+<div className="bg-white shadow-lg rounded-lg p-6 mb-8">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Project Status Distribution</h2>
 <ResponsiveContainer width="100%" height={300}>
 <PieChart>
 <Pie
@@ -106,47 +68,39 @@ data={projectStatusData}
 cx="50%"
 cy="50%"
 labelLine={false}
-outerRadius={120}
+outerRadius={100}
 fill="#8884d8"
 dataKey="value"
 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+className="text-sm"
 >
 {projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+<Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
 ))}
 </Pie>
-<Tooltip
-wrapperClassName="rounded-lg shadow-lg bg-white p-2"
-labelClassName="font-bold text-gray-800"
-itemStyle={{ color: '#333' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '20px' }} />
+<Tooltip wrapperClassName="rounded-md shadow-md" labelClassName="font-semibold" formatter={(value, name, props) => [`${value} projects`, props.payload.name]} />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
 </PieChart>
 </ResponsiveContainer>
 </div>
-</div>
 
-<div className="bg-white rounded-xl shadow-lg p-7">
-<h2 className="text-2xl font-bold text-gray-800 mb-5">Client Project Count</h2>
+{/* Client Activity Chart */}
+<div className="bg-white shadow-lg rounded-lg p-6 mb-8">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Client Activity Overview</h2>
 <ResponsiveContainer width="100%" height={300}>
 <BarChart
 data={clientActivityData}
-margin={{ top: 15, right: 30, left: 20, bottom: 15 }}
+margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 >
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="client" className="text-sm" />
+<CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
+<XAxis dataKey="name" className="text-sm" />
 <YAxis className="text-sm" />
-<Tooltip
-wrapperClassName="rounded-lg shadow-lg bg-white p-2"
-labelClassName="font-bold text-gray-800"
-itemStyle={{ color: '#333' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '20px' }} />
-<Bar dataKey="projects" fill="#82ca9d" name="Projects" />
+<Tooltip wrapperClassName="rounded-md shadow-md" labelClassName="font-semibold" />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Bar dataKey="projects" fill="#8884d8" name="Total Projects" />
+<Bar dataKey="supportTickets" fill="#82ca9d" name="Support Tickets" />
 </BarChart>
 </ResponsiveContainer>
-</div>
-
 </div>
 </div>
 );
