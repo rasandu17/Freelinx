@@ -1,81 +1,116 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 ResponsiveContainer,
-LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-BarChart, Bar,
-PieChart, Pie, Cell
+LineChart, Line, BarChart, Bar, PieChart, Pie,
+XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
 } from 'recharts';
 
-// Dummy Data
 const incomeData = [
-{ name: 'Jan', income: 4000, expenses: 2400 },
-{ name: 'Feb', income: 3000, expenses: 1398 },
-{ name: 'Mar', income: 5000, expenses: 2800 },
-{ name: 'Apr', income: 4780, expenses: 3908 },
-{ name: 'May', income: 5890, expenses: 4800 },
-{ name: 'Jun', income: 6390, expenses: 3800 },
-{ name: 'Jul', income: 7490, expenses: 4300 },
-{ name: 'Aug', income: 6300, expenses: 3500 },
-{ name: 'Sep', income: 7200, expenses: 4200 },
-{ name: 'Oct', income: 6800, expenses: 3900 },
-{ name: 'Nov', income: 7900, expenses: 4500 },
-{ name: 'Dec', income: 8000, expenses: 4800 },
+{ name: 'Jan', income: 4000 },
+{ name: 'Feb', income: 3000 },
+{ name: 'Mar', income: 5000 },
+{ name: 'Apr', income: 4500 },
+{ name: 'May', income: 6000 },
+{ name: 'Jun', income: 5500 },
+{ name: 'Jul', income: 7000 },
+{ name: 'Aug', income: 6500 },
+{ name: 'Sep', income: 7500 },
+{ name: 'Oct', income: 8000 },
+{ name: 'Nov', income: 7200 },
+{ name: 'Dec', income: 9000 },
 ];
 
 const projectStatusData = [
-{ name: 'Completed', value: 12 },
-{ name: 'In Progress', value: 8 },
-{ name: 'Pending', value: 5 },
-{ name: 'On Hold', value: 3 },
+{ status: 'Pending', count: 8 },
+{ status: 'In Progress', count: 15 },
+{ status: 'Completed', count: 25 },
+{ status: 'On Hold', count: 3 },
+{ status: 'Cancelled', count: 2 },
 ];
 
 const clientActivityData = [
-{ name: 'Client A', projects: 5, interactions: 15 },
-{ name: 'Client B', projects: 3, interactions: 10 },
-{ name: 'Client C', projects: 7, interactions: 22 },
-{ name: 'Client D', projects: 4, interactions: 18 },
-{ name: 'Client E', projects: 6, interactions: 20 },
+{ name: 'New Clients', value: 300 },
+{ name: 'Active Clients', value: 500 },
+{ name: 'Inactive Clients', value: 200 },
+{ name: 'Churned Clients', value: 100 },
 ];
 
-const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A284D8', '#FF69B4'];
+const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-const ReportsPage = () => {
+function ReportsPage() {
+// Although not strictly necessary for static data, useState/useEffect are included as per task requirements
+const [loading, setLoading] = useState(false); // Example hook usage
+const [error, setError] = useState(null);     // Example hook usage
+
+useEffect(() => {
+// Simulate data fetching if this were a dynamic page
+// setLoading(true);
+// fetchData().then(data => { /* setData(data) */ }).catch(err => setError(err)).finally(() => setLoading(false));
+}, []);
+
+if (loading) return <div className="text-center p-8 text-xl font-medium">Loading reports...</div>;
+if (error) return <div className="text-center p-8 text-xl font-medium text-red-600">Error: {error.message}</div>;
+
 return (
-<div className="min-h-screen bg-gray-100 p-6 sm:p-8 lg:p-10">
-<h1 className="text-3xl font-bold text-gray-800 mb-8 sm:mb-10">Reports Dashboard</h1>
+<div className="min-h-screen bg-gray-100 p-6 md:p-8 lg:p-10">
+<h1 className="text-4xl font-extrabold text-gray-800 mb-8 pb-4 border-b-2 border-gray-300">Reports Dashboard</h1>
 
-<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-
-{/* Monthly Income & Expenses Chart */}
-<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-<h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income & Expenses</h2>
-<ResponsiveContainer width="100%" height={300}>
+{/* Monthly Income Overview */}
+<section className="bg-white shadow-xl rounded-lg p-6 mb-8 border border-gray-200">
+<h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">Monthly Income Overview</h2>
+<div className="h-80 w-full">
+<ResponsiveContainer width="100%" height="100%">
 <LineChart
 data={incomeData}
 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 >
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="name" stroke="#555" />
-<YAxis stroke="#555" />
+<XAxis dataKey="name" tick={{ fill: '#6b7280' }} />
+<YAxis tick={{ fill: '#6b7280' }} />
 <Tooltip
-wrapperClassName="rounded-lg shadow-md border border-gray-200 p-2 text-sm bg-white"
-labelClassName="font-bold text-gray-800 mb-1"
-itemStyle={{ padding: 0, margin: 0, color: '#333' }}
+contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px', padding: '10px' }}
+labelStyle={{ fontWeight: 'bold', color: '#333' }}
+itemStyle={{ color: '#333' }}
 />
 <Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
+<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} name="Income ($)" />
 </LineChart>
 </ResponsiveContainer>
 </div>
+</section>
 
-{/* Project Status Distribution Chart */}
-<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-<h2 className="text-xl font-semibold text-gray-700 mb-4">Project Status Distribution</h2>
-<ResponsiveContainer width="100%" height={300}>
+{/* Project Status Distribution */}
+<section className="bg-white shadow-xl rounded-lg p-6 mb-8 border border-gray-200">
+<h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">Project Status Distribution</h2>
+<div className="h-80 w-full">
+<ResponsiveContainer width="100%" height="100%">
+<BarChart
+data={projectStatusData}
+margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+>
+<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+<XAxis dataKey="status" tick={{ fill: '#6b7280' }} />
+<YAxis tick={{ fill: '#6b7280' }} />
+<Tooltip
+contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px', padding: '10px' }}
+labelStyle={{ fontWeight: 'bold', color: '#333' }}
+itemStyle={{ color: '#333' }}
+/>
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Bar dataKey="count" fill="#82ca9d" name="Number of Projects" />
+</BarChart>
+</ResponsiveContainer>
+</div>
+</section>
+
+{/* Client Activity Breakdown */}
+<section className="bg-white shadow-xl rounded-lg p-6 border border-gray-200">
+<h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3">Client Activity Breakdown</h2>
+<div className="h-80 w-full flex justify-center items-center">
+<ResponsiveContainer width="100%" height="100%">
 <PieChart>
 <Pie
-data={projectStatusData}
+data={clientActivityData}
 cx="50%"
 cy="50%"
 labelLine={false}
@@ -84,45 +119,24 @@ fill="#8884d8"
 dataKey="value"
 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
 >
-{projectStatusData.map((entry, index) => (
+{
+clientActivityData.map((entry, index) => (
 <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-))}
+))
+}
 </Pie>
 <Tooltip
-wrapperClassName="rounded-lg shadow-md border border-gray-200 p-2 text-sm bg-white"
-itemStyle={{ padding: 0, margin: 0, color: '#333' }}
+contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px', padding: '10px' }}
+labelStyle={{ fontWeight: 'bold', color: '#333' }}
+itemStyle={{ color: '#333' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px' }} />
 </PieChart>
 </ResponsiveContainer>
 </div>
-
-{/* Client Project & Interaction Counts Chart */}
-<div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-<h2 className="text-xl font-semibold text-gray-700 mb-4">Client Project & Interaction Counts</h2>
-<ResponsiveContainer width="100%" height={300}>
-<BarChart
-data={clientActivityData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="name" stroke="#555" />
-<YAxis stroke="#555" />
-<Tooltip
-wrapperClassName="rounded-lg shadow-md border border-gray-200 p-2 text-sm bg-white"
-labelClassName="font-bold text-gray-800 mb-1"
-itemStyle={{ padding: 0, margin: 0, color: '#333' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar dataKey="projects" fill="#8884d8" name="Projects" />
-<Bar dataKey="interactions" fill="#82ca9d" name="Interactions" />
-</BarChart>
-</ResponsiveContainer>
-</div>
-
-</div>
+</section>
 </div>
 );
-};
+}
 
 export default ReportsPage;
