@@ -1,141 +1,164 @@
 import React, { useState, useEffect } from 'react';
 import {
-ResponsiveContainer,
-LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-XAxis, YAxis, CartesianGrid, Tooltip, Legend
+LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+PieChart, Pie, Cell, Sector, BarChart, Bar
 } from 'recharts';
 
-const PIE_COLORS = ['#0f766e', '#10b981', '#fcd34d', '#ef4444']; // Teal-700, Green-500, Yellow-300, Red-500
-
-const ReportsPage = () => {
-const [incomeData, setIncomeData] = useState([]);
-const [projectStatusData, setProjectStatusData] = useState([]);
-const [clientActivityData, setClientActivityData] = useState([]);
-const [isLoading, setIsLoading] = useState(true);
-
-useEffect(() => {
-// Simulate fetching data from an API
-const fetchReportsData = setTimeout(() => {
-const initialIncomeData = [
+// Dummy data for the charts
+const incomeData = [
 { month: 'Jan', income: 4000, expenses: 2400 },
 { month: 'Feb', income: 3000, expenses: 1398 },
 { month: 'Mar', income: 5000, expenses: 2800 },
 { month: 'Apr', income: 4780, expenses: 3908 },
 { month: 'May', income: 5890, expenses: 4800 },
-{ month: 'Jun', income: 6390, expenses: 3800 },
-{ month: 'Jul', income: 5900, expenses: 3500 },
-{ month: 'Aug', income: 6500, expenses: 4200 },
+{ month: 'Jun', income: 6390, expenses: 4300 },
 ];
 
-const initialProjectStatusData = [
-{ name: 'Completed', value: 70 },
-{ name: 'In Progress', value: 30 },
-{ name: 'Pending', value: 20 },
-{ name: 'On Hold', value: 10 },
+const projectStatusData = [
+{ name: 'Completed', value: 25 },
+{ name: 'In Progress', value: 18 },
+{ name: 'Pending', value: 10 },
+{ name: 'Cancelled', value: 5 },
 ];
 
-const initialClientActivityData = [
-{ quarter: 'Q1', newClients: 30, activeClients: 70 },
-{ quarter: 'Q2', newClients: 45, activeClients: 85 },
-{ quarter: 'Q3', newClients: 60, activeClients: 90 },
-{ quarter: 'Q4', newClients: 50, activeClients: 80 },
+const clientActivityData = [
+{ client: 'Client A', projects: 12 },
+{ client: 'Client B', projects: 8 },
+{ client: 'Client C', projects: 15 },
+{ client: 'Client D', projects: 7 },
+{ client: 'Client E', projects: 9 },
 ];
 
-setIncomeData(initialIncomeData);
-setProjectStatusData(initialProjectStatusData);
-setClientActivityData(initialClientActivityData);
-setIsLoading(false);
-}, 1000); // Simulate 1 second network delay
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-return () => clearTimeout(fetchReportsData);
-}, []);
+const renderActiveShape = (props) => {
+const RADIAN = Math.PI / 180;
+const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+const sin = Math.sin(-RADIAN * midAngle);
+const cos = Math.cos(-RADIAN * midAngle);
+const sx = cx + (outerRadius + 10) * cos;
+const sy = cy + (outerRadius + 10) * sin;
+const mx = cx + (outerRadius + 30) * cos;
+const my = cy + (outerRadius + 30) * sin;
+const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+const ey = my;
+const textAnchor = cos >= 0 ? 'start' : 'end';
 
-if (isLoading) {
 return (
-<div className="flex items-center justify-center min-h-screen bg-gray-100 text-gray-700 text-xl font-medium">
-Loading reports...
-</div>
+<g>
+<text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
+{payload.name}
+</text>
+<Sector
+cx={cx}
+cy={cy}
+innerRadius={innerRadius}
+outerRadius={outerRadius}
+startAngle={startAngle}
+endAngle={endAngle}
+fill={fill}
+/>
+<Sector
+cx={cx}
+cy={cy}
+startAngle={startAngle}
+endAngle={endAngle}
+innerRadius={outerRadius + 6}
+outerRadius={outerRadius + 10}
+fill={fill}
+/>
+<path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+<circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+<text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#333">{`Projects ${value}`}</text>
+<text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
+{`(Rate ${(percent * 100).toFixed(2)}%)`}
+</text>
+</g>
 );
-}
+};
+
+const ReportsPage = () => {
+const [activePieIndex, setActivePieIndex] = useState(0);
+
+const onPieEnter = (_, index) => {
+setActivePieIndex(index);
+};
 
 return (
-<div className="p-6 min-h-screen bg-gray-100">
-<h2 className="text-3xl font-bold text-gray-800 mb-8">Reports Dashboard</h2>
+<div className="min-h-screen bg-gray-100 p-8">
+<h1 className="text-4xl font-extrabold text-gray-900 mb-10 text-center">Reports Dashboard</h1>
 
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
 
-{/* Income vs. Expenses Report */}
-<div className="bg-white p-6 rounded-lg shadow-md">
-<h3 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income vs. Expenses</h3>
+{/* Income Chart */}
+<div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center justify-center">
+<h2 className="text-2xl font-semibold text-gray-800 mb-4">Monthly Income & Expenses</h2>
 <ResponsiveContainer width="100%" height={300}>
 <LineChart
 data={incomeData}
 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 >
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm text-gray-600" />
-<YAxis className="text-sm text-gray-600" />
+<XAxis dataKey="month" className="text-sm" />
+<YAxis className="text-sm" />
 <Tooltip
-contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px' }}
+contentStyle={{ backgroundColor: '#f9fafb', borderColor: '#e0e0e0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
 labelStyle={{ fontWeight: 'bold', color: '#333' }}
-itemStyle={{ color: '#333' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} activeDot={{ r: 8 }} name="Income" />
-<Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} activeDot={{ r: 8 }} name="Expenses" />
+<Legend wrapperStyle={{ paddingTop: '16px' }} />
+<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
 </LineChart>
 </ResponsiveContainer>
 </div>
 
-{/* Project Status Report */}
-<div className="bg-white p-6 rounded-lg shadow-md">
-<h3 className="text-xl font-semibold text-gray-700 mb-4">Project Status Overview</h3>
+{/* Project Status Chart */}
+<div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center justify-center">
+<h2 className="text-2xl font-semibold text-gray-800 mb-4">Project Status Overview</h2>
 <ResponsiveContainer width="100%" height={300}>
-<PieChart>
+<PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
 <Pie
+activeIndex={activePieIndex}
+activeShape={renderActiveShape}
 data={projectStatusData}
 cx="50%"
 cy="50%"
-labelLine={false}
-outerRadius={100}
+innerRadius={60}
+outerRadius={80}
 fill="#8884d8"
 dataKey="value"
-nameKey="name"
-label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+onMouseEnter={onPieEnter}
 >
 {projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
 ))}
 </Pie>
 <Tooltip
-contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px' }}
+contentStyle={{ backgroundColor: '#f9fafb', borderColor: '#e0e0e0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
 labelStyle={{ fontWeight: 'bold', color: '#333' }}
-itemStyle={{ color: '#333' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Legend wrapperStyle={{ paddingTop: '16px' }} />
 </PieChart>
 </ResponsiveContainer>
 </div>
 
-{/* Client Activity Report */}
-<div className="bg-white p-6 rounded-lg shadow-md">
-<h3 className="text-xl font-semibold text-gray-700 mb-4">Quarterly Client Activity</h3>
+{/* Client Activity Chart */}
+<div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center justify-center">
+<h2 className="text-2xl font-semibold text-gray-800 mb-4">Projects Per Client</h2>
 <ResponsiveContainer width="100%" height={300}>
 <BarChart
 data={clientActivityData}
 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 >
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="quarter" className="text-sm text-gray-600" />
-<YAxis className="text-sm text-gray-600" />
+<XAxis dataKey="client" className="text-sm" />
+<YAxis className="text-sm" />
 <Tooltip
-contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '4px' }}
+contentStyle={{ backgroundColor: '#f9fafb', borderColor: '#e0e0e0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
 labelStyle={{ fontWeight: 'bold', color: '#333' }}
-itemStyle={{ color: '#333' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar dataKey="newClients" fill="#3b82f6" name="New Clients" /> {/* Blue-500 */}
-<Bar dataKey="activeClients" fill="#a855f7" name="Active Clients" /> {/* Purple-500 */}
+<Legend wrapperStyle={{ paddingTop: '16px' }} />
+<Bar dataKey="projects" fill="#8884d8" radius={[4, 4, 0, 0]} />
 </BarChart>
 </ResponsiveContainer>
 </div>
