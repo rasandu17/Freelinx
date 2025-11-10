@@ -1,111 +1,103 @@
 import React, { useState, useEffect } from 'react';
 import {
-LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-BarChart, Bar,
-PieChart, Pie, Cell
+ResponsiveContainer,
+BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+PieChart, Pie, Cell,
+AreaChart, Area
 } from 'recharts';
 
 const ReportsPage = () => {
+const [loading, setLoading] = useState(true);
 const [incomeData, setIncomeData] = useState([]);
 const [projectStatusData, setProjectStatusData] = useState([]);
 const [clientActivityData, setClientActivityData] = useState([]);
 
-// Mock data for charts
 useEffect(() => {
-// Monthly Income Data
+// Simulate API call for fetching report data
+setTimeout(() => {
 setIncomeData([
-{ name: 'Jan', income: 4000, expenses: 2400 },
-{ name: 'Feb', income: 3000, expenses: 1398 },
-{ name: 'Mar', income: 5000, expenses: 2800 },
-{ name: 'Apr', income: 4780, expenses: 3908 },
-{ name: 'May', income: 5890, expenses: 4800 },
-{ name: 'Jun', income: 6000, expenses: 3800 },
-{ name: 'Jul', income: 5500, expenses: 4300 },
-{ name: 'Aug', income: 6200, expenses: 3900 },
-{ name: 'Sep', income: 5900, expenses: 4500 },
-{ name: 'Oct', income: 7000, expenses: 4100 },
-{ name: 'Nov', income: 6500, expenses: 3700 },
-{ name: 'Dec', income: 7500, expenses: 4900 },
+{ month: 'Jan', income: 12000 },
+{ month: 'Feb', income: 15000 },
+{ month: 'Mar', income: 10000 },
+{ month: 'Apr', income: 18000 },
+{ month: 'May', income: 14000 },
+{ month: 'Jun', income: 20000 },
+{ month: 'Jul', income: 16000 },
+{ month: 'Aug', income: 19000 },
+{ month: 'Sep', income: 17000 },
+{ month: 'Oct', income: 21000 },
+{ month: 'Nov', income: 18500 },
+{ month: 'Dec', income: 22000 },
 ]);
 
-// Project Status Data
 setProjectStatusData([
-{ name: 'Pending', projects: 5 },
-{ name: 'In Progress', projects: 12 },
-{ name: 'Completed', projects: 20 },
-{ name: 'On Hold', projects: 3 },
+{ name: 'In Progress', value: 40 },
+{ name: 'Completed', value: 30 },
+{ name: 'On Hold', value: 15 },
+{ name: 'Pending', value: 15 },
 ]);
 
-// Client Activity Data (e.g., contribution to total projects/revenue)
 setClientActivityData([
-{ name: 'Client A', value: 400 },
-{ name: 'Client B', value: 300 },
-{ name: 'Client C', value: 200 },
-{ name: 'Client D', value: 150 },
-{ name: 'Other', value: 100 },
+{ month: 'Jan', activeClients: 15, newClients: 5 },
+{ month: 'Feb', activeClients: 18, newClients: 7 },
+{ month: 'Mar', activeClients: 17, newClients: 6 },
+{ month: 'Apr', activeClients: 20, newClients: 8 },
+{ month: 'May', activeClients: 22, newClients: 9 },
+{ month: 'Jun', activeClients: 25, newClients: 10 },
+{ month: 'Jul', activeClients: 23, newClients: 8 },
+{ month: 'Aug', activeClients: 26, newClients: 11 },
+{ month: 'Sep', activeClients: 24, newClients: 9 },
+{ month: 'Oct', activeClients: 28, newClients: 12 },
+{ month: 'Nov', activeClients: 27, newClients: 10 },
+{ month: 'Dec', activeClients: 30, newClients: 13 },
 ]);
+
+setLoading(false);
+}, 1500); // Simulate 1.5 second loading time
 }, []);
 
-const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A155B9'];
+const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+if (loading) {
+return (
+<div className="flex items-center justify-center min-h-screen bg-gray-50 p-6">
+<div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+<p className="ml-4 text-lg text-gray-700">Loading reports...</p>
+</div>
+);
+}
 
 return (
-<div className="p-6 bg-gray-50 min-h-screen">
-<h1 className="text-3xl font-bold text-gray-800 mb-8">Reports Dashboard</h1>
+<div className="min-h-screen bg-gray-100 p-6">
+<h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">Reports Dashboard</h1>
 
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-{/* Monthly Income Chart */}
-<div className="bg-white p-6 rounded-lg shadow-md col-span-full lg:col-span-2">
-<h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income & Expenses</h2>
-<ResponsiveContainer width="100%" height={350}>
-<LineChart
-data={incomeData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="name" className="text-sm" />
-<YAxis className="text-sm" />
-<Tooltip
-contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold', color: '#333' }}
-itemStyle={{ color: '#555' }}
-/>
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
-</LineChart>
-</ResponsiveContainer>
-</div>
-
-{/* Project Status Chart */}
-<div className="bg-white p-6 rounded-lg shadow-md col-span-1">
-<h2 className="text-xl font-semibold text-gray-700 mb-4">Project Status Overview</h2>
-<ResponsiveContainer width="100%" height={350}>
+{/* Income Chart */}
+<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
+<h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Income Over Time</h2>
+<ResponsiveContainer width="100%" height={300}>
 <BarChart
-data={projectStatusData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+data={incomeData}
+margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
 >
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="name" className="text-sm" />
-<YAxis className="text-sm" />
-<Tooltip
-contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold', color: '#333' }}
-itemStyle={{ color: '#555' }}
-/>
+<XAxis dataKey="month" className="text-sm text-gray-600" />
+<YAxis className="text-sm text-gray-600" />
+<Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
 <Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar dataKey="projects" fill="#8884d8" />
+<Bar dataKey="income" fill="#8884d8" name="Monthly Income" />
 </BarChart>
 </ResponsiveContainer>
 </div>
 
-{/* Client Activity Chart */}
-<div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-2 lg:col-span-1">
-<h2 className="text-xl font-semibold text-gray-700 mb-4">Top Client Activity</h2>
-<ResponsiveContainer width="100%" height={350}>
+{/* Project Status Chart */}
+<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
+<h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Project Status Distribution</h2>
+<ResponsiveContainer width="100%" height={300}>
 <PieChart>
 <Pie
-data={clientActivityData}
+data={projectStatusData}
 cx="50%"
 cy="50%"
 labelLine={false}
@@ -114,18 +106,44 @@ fill="#8884d8"
 dataKey="value"
 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
 >
-{clientActivityData.map((entry, index) => (
+{
+projectStatusData.map((entry, index) => (
 <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-))}
+))
+}
 </Pie>
-<Tooltip
-contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-labelStyle={{ fontWeight: 'bold', color: '#333' }}
-itemStyle={{ color: '#555' }}
-formatter={(value, name) => [`${value}`, name]}
-/>
+<Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
 <Legend wrapperStyle={{ paddingTop: '10px' }} />
 </PieChart>
+</ResponsiveContainer>
+</div>
+
+{/* Client Activity Chart */}
+<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
+<h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Client Activity</h2>
+<ResponsiveContainer width="100%" height={300}>
+<AreaChart
+data={clientActivityData}
+margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+>
+<defs>
+<linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
+<stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+<stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+</linearGradient>
+<linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
+<stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+<stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+</linearGradient>
+</defs>
+<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+<XAxis dataKey="month" className="text-sm text-gray-600" />
+<YAxis className="text-sm text-gray-600" />
+<Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Area type="monotone" dataKey="activeClients" stroke="#8884d8" fillOpacity={1} fill="url(#colorActive)" name="Active Clients" />
+<Area type="monotone" dataKey="newClients" stroke="#82ca9d" fillOpacity={1} fill="url(#colorNew)" name="New Clients" />
+</AreaChart>
 </ResponsiveContainer>
 </div>
 
