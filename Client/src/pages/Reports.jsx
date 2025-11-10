@@ -1,92 +1,112 @@
 import React, { useState, useEffect } from 'react';
 import {
 ResponsiveContainer,
-BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-LineChart, Line,
-PieChart, Pie, Cell
+LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+PieChart, Pie, Cell,
+BarChart, Bar
 } from 'recharts';
 
 const ReportsPage = () => {
-const [incomeData, setIncomeData] = useState([]);
-const [projectStatusData, setProjectStatusData] = useState([]);
-const [clientActivityData, setClientActivityData] = useState([]);
+const [reportsData, setReportsData] = useState({
+income: [],
+projectStatus: [],
+clientActivity: [],
+});
+const [loading, setLoading] = useState(true);
 
-const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28F00', '#B04BDB'];
+// Recharts Pie Chart specific colors for better distinction
+const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#3D3D3D'];
 
 useEffect(() => {
-const fetchReportsData = () => {
-setIncomeData([
-{ name: 'Jan', income: 4000, expenses: 2400 },
-{ name: 'Feb', income: 3000, expenses: 1398 },
-{ name: 'Mar', income: 5000, expenses: 2800 },
-{ name: 'Apr', income: 4500, expenses: 3908 },
-{ name: 'May', income: 6000, expenses: 4800 },
-{ name: 'Jun', income: 5500, expenses: 3800 },
-{ name: 'Jul', income: 7000, expenses: 4300 },
-{ name: 'Aug', income: 6200, expenses: 3500 },
-{ name: 'Sep', income: 7500, expenses: 4800 },
-{ name: 'Oct', income: 6800, expenses: 4100 },
-{ name: 'Nov', income: 8000, expenses: 5200 },
-{ name: 'Dec', income: 9000, expenses: 5800 },
-]);
+// Simulate fetching data from an API
+const fetchReportsData = async () => {
+setLoading(true);
+// Simulate network delay
+await new Promise(resolve => setTimeout(resolve, 1000));
 
-setProjectStatusData([
-{ name: 'Completed', value: 400 },
-{ name: 'In Progress', value: 300 },
-{ name: 'Pending', value: 200 },
-{ name: 'On Hold', value: 100 },
-]);
+const mockIncomeData = [
+{ month: 'Jan', income: 4500 },
+{ month: 'Feb', income: 3800 },
+{ month: 'Mar', income: 5200 },
+{ month: 'Apr', income: 4700 },
+{ month: 'May', income: 6100 },
+{ month: 'Jun', income: 5500 },
+{ month: 'Jul', income: 6800 },
+{ month: 'Aug', income: 7200 },
+{ month: 'Sep', income: 6500 },
+{ month: 'Oct', income: 7800 },
+{ month: 'Nov', income: 8100 },
+{ month: 'Dec', income: 7500 },
+];
 
-setClientActivityData([
-{ name: 'Client A', projects: 12, revenue: 80000 },
-{ name: 'Client B', projects: 8, revenue: 60000 },
-{ name: 'Client C', projects: 10, revenue: 75000 },
-{ name: 'Client D', projects: 5, revenue: 40000 },
-{ name: 'Client E', projects: 7, revenue: 55000 },
-{ name: 'Client F', projects: 9, revenue: 68000 },
-]);
+const mockProjectStatusData = [
+{ name: 'Completed', value: 25 },
+{ name: 'In Progress', value: 18 },
+{ name: 'Pending', value: 10 },
+{ name: 'On Hold', value: 5 },
+];
+
+const mockClientActivityData = [
+{ client: 'Alpha Corp', projects: 15 },
+{ client: 'Beta Innovations', projects: 10 },
+{ client: 'Gamma Solutions', projects: 8 },
+{ client: 'Delta Systems', projects: 6 },
+{ client: 'Epsilon Tech', projects: 4 },
+];
+
+setReportsData({
+income: mockIncomeData,
+projectStatus: mockProjectStatusData,
+clientActivity: mockClientActivityData,
+});
+setLoading(false);
 };
 
 fetchReportsData();
-}, []);
+}, []); // Empty dependency array means this runs once on mount
+
+if (loading) {
+return (
+<div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
+<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+<p className="ml-4 text-lg text-gray-700">Loading reports...</p>
+</div>
+);
+}
 
 return (
-<div className="p-6 bg-gray-50 min-h-screen">
-<h1 className="text-4xl font-extrabold text-gray-800 mb-8 text-center">Reports Dashboard</h1>
+<div className="p-6 bg-gray-100 min-h-screen font-sans">
+<h1 className="text-3xl font-extrabold text-gray-800 mb-8 border-b pb-4">Reports Overview</h1>
 
-<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-{/* Monthly Income Overview */}
-<div className="bg-white rounded-xl shadow-lg p-6">
-<h2 className="text-2xl font-bold text-gray-700 mb-4 text-center">Monthly Income & Expenses</h2>
+{/* Monthly Income Report Card */}
+<div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Monthly Income Trend</h2>
 <ResponsiveContainer width="100%" height={300}>
-<LineChart
-data={incomeData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
+<LineChart data={reportsData.income} margin={{ top: 15, right: 30, left: 20, bottom: 5 }}>
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="name" stroke="#6b7280" />
-<YAxis stroke="#6b7280" />
+<XAxis dataKey="month" className="text-sm font-medium" />
+<YAxis className="text-sm font-medium" tickFormatter={(value) => `$${value}`} />
 <Tooltip
-wrapperClassName="rounded-lg shadow-md p-2 bg-white border border-gray-200"
-contentStyle={{ border: 'none' }}
-labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-itemStyle={{ fontSize: '14px' }}
+cursor={{ strokeDasharray: '3 3', stroke: '#a0aec0' }}
+contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderColor: '#e2e8f0' }}
+itemStyle={{ padding: '4px 0', color: '#4a5568' }}
+labelStyle={{ color: '#2d3748', fontWeight: 'bold' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
-<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
+<Legend verticalAlign="top" height={36} align="right" iconType="circle" />
+<Line type="monotone" dataKey="income" stroke="#4a90e2" activeDot={{ r: 8, fill: '#4a90e2' }} strokeWidth={2} name="Income" />
 </LineChart>
 </ResponsiveContainer>
 </div>
 
-{/* Project Status Distribution */}
-<div className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center">
-<h2 className="text-2xl font-bold text-gray-700 mb-4 text-center">Project Status Distribution</h2>
+{/* Project Status Report Card */}
+<div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Current Project Status</h2>
 <ResponsiveContainer width="100%" height={300}>
-<PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+<PieChart>
 <Pie
-data={projectStatusData}
+data={reportsData.projectStatus}
 cx="50%"
 cy="50%"
 labelLine={false}
@@ -94,43 +114,44 @@ outerRadius={100}
 fill="#8884d8"
 dataKey="value"
 nameKey="name"
+label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
 >
-{projectStatusData.map((entry, index) => (
+{reportsData.projectStatus.map((entry, index) => (
 <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
 ))}
 </Pie>
 <Tooltip
-wrapperClassName="rounded-lg shadow-md p-2 bg-white border border-gray-200"
-contentStyle={{ border: 'none' }}
-labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-itemStyle={{ fontSize: '14px' }}
+contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderColor: '#e2e8f0' }}
+itemStyle={{ padding: '4px 0', color: '#4a5568' }}
+labelStyle={{ color: '#2d3748', fontWeight: 'bold' }}
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Legend iconType="circle" />
 </PieChart>
 </ResponsiveContainer>
 </div>
 
-{/* Client Activity Overview */}
-<div className="bg-white rounded-xl shadow-lg p-6">
-<h2 className="text-2xl font-bold text-gray-700 mb-4 text-center">Client Activity Overview</h2>
+{/* Client Activity Report Card */}
+<div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+<h2 className="text-xl font-semibold text-gray-700 mb-4">Client Project Count</h2>
 <ResponsiveContainer width="100%" height={300}>
-<BarChart
-data={clientActivityData}
-margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
->
+<BarChart data={reportsData.clientActivity} margin={{ top: 15, right: 30, left: 20, bottom: 5 }}>
 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="name" stroke="#6b7280" />
-<YAxis yAxisId="left" orientation="left" stroke="#8884d8" label={{ value: 'Projects', angle: -90, position: 'insideLeft', fill: '#6b7280' }} />
-<YAxis yAxisId="right" orientation="right" stroke="#82ca9d" label={{ value: 'Revenue', angle: 90, position: 'insideRight', fill: '#6b7280' }} />
-<Tooltip
-wrapperClassName="rounded-lg shadow-md p-2 bg-white border border-gray-200"
-contentStyle={{ border: 'none' }}
-labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-itemStyle={{ fontSize: '14px' }}
+<XAxis
+dataKey="client"
+className="text-sm font-medium"
+angle={-15} // Rotate labels to prevent overlap for longer names
+textAnchor="end"
+height={50} // Adjust height to accommodate rotated labels
 />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar yAxisId="left" dataKey="projects" fill="#8884d8" name="Projects" />
-<Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Revenue" />
+<YAxis className="text-sm font-medium" allowDecimals={false} />
+<Tooltip
+cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+contentStyle={{ borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderColor: '#e2e8f0' }}
+itemStyle={{ padding: '4px 0', color: '#4a5568' }}
+labelStyle={{ color: '#2d3748', fontWeight: 'bold' }}
+/>
+<Legend verticalAlign="top" height={36} align="right" iconType="circle" />
+<Bar dataKey="projects" fill="#82ca9d" name="Projects" />
 </BarChart>
 </ResponsiveContainer>
 </div>
