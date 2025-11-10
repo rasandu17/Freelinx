@@ -1,152 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import {
-ResponsiveContainer,
-BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-PieChart, Pie, Cell,
-AreaChart, Area
-} from 'recharts';
+import React from 'react';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts';
+
+// Mock Data
+const incomeData = [
+{ month: 'Jan', income: 4000, expenses: 2400 },
+{ month: 'Feb', income: 3000, expenses: 1398 },
+{ month: 'Mar', income: 5000, expenses: 2000 },
+{ month: 'Apr', income: 4780, expenses: 2908 },
+{ month: 'May', income: 5890, expenses: 3800 },
+{ month: 'Jun', income: 6390, expenses: 4800 },
+{ month: 'Jul', income: 7490, expenses: 5300 },
+{ month: 'Aug', income: 6800, expenses: 4900 },
+{ month: 'Sep', income: 7200, expenses: 5500 },
+{ month: 'Oct', income: 8000, expenses: 6000 },
+{ month: 'Nov', income: 7500, expenses: 5800 },
+{ month: 'Dec', income: 9000, expenses: 7000 },
+];
+
+const projectStatusData = [
+{ name: 'Completed', value: 75 },
+{ name: 'In Progress', value: 45 },
+{ name: 'Pending', value: 20 },
+{ name: 'On Hold', value: 10 },
+];
+
+const clientActivityData = [
+{ clientName: 'Client A', activityCount: 15 },
+{ clientName: 'Client B', activityCount: 22 },
+{ clientName: 'Client C', activityCount: 18 },
+{ clientName: 'Client D', activityCount: 9 },
+{ clientName: 'Client E', activityCount: 30 },
+{ clientName: 'Client F', activityCount: 12 },
+];
+
+const PIE_CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const ReportsPage = () => {
-const [loading, setLoading] = useState(true);
-const [incomeData, setIncomeData] = useState([]);
-const [projectStatusData, setProjectStatusData] = useState([]);
-const [clientActivityData, setClientActivityData] = useState([]);
-
-useEffect(() => {
-// Simulate API call for fetching report data
-setTimeout(() => {
-setIncomeData([
-{ month: 'Jan', income: 12000 },
-{ month: 'Feb', income: 15000 },
-{ month: 'Mar', income: 10000 },
-{ month: 'Apr', income: 18000 },
-{ month: 'May', income: 14000 },
-{ month: 'Jun', income: 20000 },
-{ month: 'Jul', income: 16000 },
-{ month: 'Aug', income: 19000 },
-{ month: 'Sep', income: 17000 },
-{ month: 'Oct', income: 21000 },
-{ month: 'Nov', income: 18500 },
-{ month: 'Dec', income: 22000 },
-]);
-
-setProjectStatusData([
-{ name: 'In Progress', value: 40 },
-{ name: 'Completed', value: 30 },
-{ name: 'On Hold', value: 15 },
-{ name: 'Pending', value: 15 },
-]);
-
-setClientActivityData([
-{ month: 'Jan', activeClients: 15, newClients: 5 },
-{ month: 'Feb', activeClients: 18, newClients: 7 },
-{ month: 'Mar', activeClients: 17, newClients: 6 },
-{ month: 'Apr', activeClients: 20, newClients: 8 },
-{ month: 'May', activeClients: 22, newClients: 9 },
-{ month: 'Jun', activeClients: 25, newClients: 10 },
-{ month: 'Jul', activeClients: 23, newClients: 8 },
-{ month: 'Aug', activeClients: 26, newClients: 11 },
-{ month: 'Sep', activeClients: 24, newClients: 9 },
-{ month: 'Oct', activeClients: 28, newClients: 12 },
-{ month: 'Nov', activeClients: 27, newClients: 10 },
-{ month: 'Dec', activeClients: 30, newClients: 13 },
-]);
-
-setLoading(false);
-}, 1500); // Simulate 1.5 second loading time
-}, []);
-
-const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-if (loading) {
 return (
-<div className="flex items-center justify-center min-h-screen bg-gray-50 p-6">
-<div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-<p className="ml-4 text-lg text-gray-700">Loading reports...</p>
-</div>
-);
-}
+<div className="min-h-screen bg-gray-100 p-8">
+<h1 className="text-4xl font-extrabold text-gray-900 mb-10 text-center">Reports Dashboard</h1>
 
-return (
-<div className="min-h-screen bg-gray-100 p-6">
-<h1 className="text-4xl font-extrabold text-gray-900 mb-8 text-center">Reports Dashboard</h1>
-
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-{/* Income Chart */}
-<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
-<h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Income Over Time</h2>
-<ResponsiveContainer width="100%" height={300}>
-<BarChart
+{/* Income & Expenses Overview */}
+<div className="bg-white rounded-lg shadow-xl p-6 mb-8">
+<h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Income & Expenses Overview</h2>
+<div className="h-96">
+<ResponsiveContainer width="100%" height="100%">
+<LineChart
 data={incomeData}
-margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 >
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm text-gray-600" />
-<YAxis className="text-sm text-gray-600" />
-<Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Bar dataKey="income" fill="#8884d8" name="Monthly Income" />
-</BarChart>
+<CartesianGrid strokeDasharray="3 3" />
+<XAxis dataKey="month" className="text-sm" />
+<YAxis className="text-sm" />
+<Tooltip />
+<Legend />
+<Line type="monotone" dataKey="income" stroke="#8884d8" activeDot={{ r: 8 }} strokeWidth={2} />
+<Line type="monotone" dataKey="expenses" stroke="#82ca9d" strokeWidth={2} />
+</LineChart>
 </ResponsiveContainer>
 </div>
+</div>
 
-{/* Project Status Chart */}
-<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
-<h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Project Status Distribution</h2>
-<ResponsiveContainer width="100%" height={300}>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+{/* Project Status Distribution */}
+<div className="bg-white rounded-lg shadow-xl p-6">
+<h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Project Status Distribution</h2>
+<div className="h-96">
+<ResponsiveContainer width="100%" height="100%">
 <PieChart>
 <Pie
 data={projectStatusData}
 cx="50%"
 cy="50%"
 labelLine={false}
-outerRadius={100}
+outerRadius={120}
 fill="#8884d8"
 dataKey="value"
 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
 >
-{
-projectStatusData.map((entry, index) => (
-<Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-))
-}
+{projectStatusData.map((entry, index) => (
+<Cell key={`cell-${index}`} fill={PIE_CHART_COLORS[index % PIE_CHART_COLORS.length]} />
+))}
 </Pie>
-<Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
+<Tooltip />
+<Legend />
 </PieChart>
 </ResponsiveContainer>
 </div>
-
-{/* Client Activity Chart */}
-<div className="bg-white p-6 rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-300">
-<h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Client Activity</h2>
-<ResponsiveContainer width="100%" height={300}>
-<AreaChart
-data={clientActivityData}
-margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
->
-<defs>
-<linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
-<stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-<stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
-</linearGradient>
-<linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
-<stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-<stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
-</linearGradient>
-</defs>
-<CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-<XAxis dataKey="month" className="text-sm text-gray-600" />
-<YAxis className="text-sm text-gray-600" />
-<Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-<Legend wrapperStyle={{ paddingTop: '10px' }} />
-<Area type="monotone" dataKey="activeClients" stroke="#8884d8" fillOpacity={1} fill="url(#colorActive)" name="Active Clients" />
-<Area type="monotone" dataKey="newClients" stroke="#82ca9d" fillOpacity={1} fill="url(#colorNew)" name="New Clients" />
-</AreaChart>
-</ResponsiveContainer>
 </div>
 
+{/* Client Activity Trends */}
+<div className="bg-white rounded-lg shadow-xl p-6">
+<h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Client Activity Trends</h2>
+<div className="h-96">
+<ResponsiveContainer width="100%" height="100%">
+<BarChart
+data={clientActivityData}
+margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+>
+<CartesianGrid strokeDasharray="3 3" />
+<XAxis dataKey="clientName" className="text-sm" />
+<YAxis className="text-sm" />
+<Tooltip />
+<Legend />
+<Bar dataKey="activityCount" fill="#8884d8" />
+</BarChart>
+</ResponsiveContainer>
+</div>
+</div>
 </div>
 </div>
 );
